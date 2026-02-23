@@ -1,31 +1,31 @@
+let lastStatus = {};
+
 onValue(slotsRef, (snapshot) => {
   const data = snapshot.val();
   let availableCount = 0;
 
   for (let key in data) {
     const slotElement = document.getElementById(key);
+    const status = data[key]; // direct string from ESP32
 
-    // Use the value directly (string: "filled" / "empty")
-    const status = data[key]; 
-
+    // Update slot card UI
     if (status === "empty") {
-      slotElement.style.background = "#2ecc71"; // green
+      slotElement.style.background = "#2ecc71";
       slotElement.innerHTML = key.toUpperCase() + " - <span class='badge empty'>EMPTY</span>";
       availableCount++;
     } else if (status === "filled") {
-      slotElement.style.background = "#e74c3c"; // red
+      slotElement.style.background = "#e74c3c";
       slotElement.innerHTML = key.toUpperCase() + " - <span class='badge filled'>FILLED</span>";
     }
 
-    // Track changes to record entry/exit
-    if (!lastStatus[key]) lastStatus[key] = status;
+    // Initialize lastStatus if undefined
+    if (!(key in lastStatus)) lastStatus[key] = status;
 
     // Entry detected
     if (status === "filled" && lastStatus[key] === "empty") {
       const now = new Date().toLocaleTimeString();
       set(ref(database, `slots/${key}/entry`), now);
 
-      // Add to history
       const newRecord = push(historyRef);
       set(newRecord, {
         slot: key,
@@ -40,7 +40,7 @@ onValue(slotsRef, (snapshot) => {
       const now = new Date().toLocaleTimeString();
       set(ref(database, `slots/${key}/exit`), now);
 
-      // Update latest history record
+      // Update latest history record for this slot
       onValue(historyRef, (historySnap) => {
         const historyData = historySnap.val();
         if (historyData) {
@@ -49,7 +49,7 @@ onValue(slotsRef, (snapshot) => {
             if (historyData[k].slot === key && historyData[k].exit === "") {
               const entryTime = new Date("1970/01/01 " + historyData[k].entry);
               const exitTime = new Date("1970/01/01 " + now);
-              const diff = Math.floor((exitTime - entryTime)/60000); // minutes
+              const diff = Math.floor((exitTime - entryTime) / 60000);
               set(ref(database, `history/${k}/exit`), now);
               set(ref(database, `history/${k}/duration`), diff + " mins");
               break;
@@ -59,10 +59,11 @@ onValue(slotsRef, (snapshot) => {
       }, { onlyOnce: true });
     }
 
+    // Update lastStatus at the end
     lastStatus[key] = status;
   }
 
-  // Update UI
+  // Update available slots and last update time
   document.getElementById("available").innerText = "Available: " + availableCount;
   document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
 
