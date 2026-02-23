@@ -91,60 +91,35 @@
   </table>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
   const firebaseConfig = {
-    apiKey: "PASTE_YOURS",
-    authDomain: "PASTE_YOURS",
-    databaseURL: "PASTE_YOURS",
-    projectId: "PASTE_YOURS"
+    apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
+    authDomain: "smart-parking-60139.firebaseapp.com",
+    databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "smart-parking-60139",
+    storageBucket: "smart-parking-60139.firebasestorage.app",
+    messagingSenderId: "284320423783",
+    appId: "1:284320423783:web:535b714ab14f70597899c2",
+    measurementId: "G-B5G3QWT90S"
   };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
 
-  db.ref("parking").on("value", (snapshot) => {
+  // Initialize Database
+  const database = getDatabase(app);
+
+  // Reference to slots
+  const slotsRef = ref(database, "slots");
+
+  // Listen for real-time changes
+  onValue(slotsRef, (snapshot) => {
     const data = snapshot.val();
-    if(!data) return;
-
-    let availableCount = 0;
-
-    for(let i=1;i<=4;i++){
-      let slot = data["slot"+i];
-      let element = document.getElementById("slot"+i);
-
-      element.innerHTML = `
-        <h3>Slot ${i}</h3>
-        <p>Status: ${slot.status}</p>
-        <p>Entry: ${slot.entry || "-"}</p>
-        <p>Exit: ${slot.exit || "-"}</p>
-      `;
-
-      if(slot.status === "EMPTY"){
-        element.className = "card empty";
-        availableCount++;
-      } else {
-        element.className = "card full";
-      }
-    }
-
-    document.getElementById("available").innerText = "Available: " + availableCount;
-    document.getElementById("updated").innerText =
-      "Last Update: " + new Date().toLocaleTimeString();
+    console.log("Slots Data:", data);
   });
-
-  db.ref("history").on("child_added", (snapshot) => {
-    const record = snapshot.val();
-    const row = `
-      <tr>
-        <td>${record.slot}</td>
-        <td>${record.entry}</td>
-        <td>${record.exit}</td>
-        <td>${record.duration}</td>
-      </tr>
-    `;
-    document.getElementById("historyTable").innerHTML += row;
-  });
-
 </script>
 
 </body>
@@ -169,3 +144,4 @@ history
       entry: "10:30 AM"
       exit: "11:15 AM"
       duration: "45 mins"
+
