@@ -34,6 +34,8 @@
       text-align: center;
       backdrop-filter: blur(10px);
       transition: 0.3s;
+      font-weight: 600;
+      cursor: pointer;
     }
 
     .card.full { background: rgba(255,0,0,0.7); }
@@ -56,6 +58,28 @@
       padding: 10px;
       border-bottom: 1px solid rgba(255,255,255,0.3);
       text-align: center;
+    }
+
+    th {
+      background: rgba(255,255,255,0.2);
+      border-radius: 5px;
+    }
+
+    .badge {
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      color: white;
+      transition: 0.3s;
+    }
+
+    .badge.filled { background-color: #e74c3c; }
+    .badge.empty { background-color: #2ecc71; }
+
+    /* Smooth hover effect for cards */
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -93,7 +117,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
@@ -106,69 +130,102 @@
     measurementId: "G-B5G3QWT90S"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-
-  // Initialize Database
   const database = getDatabase(app);
-
-  // Reference to slots
   const slotsRef = ref(database, "slots");
+  const historyRef = ref(database, "history");
 
-  // Listen for real-time changes
+  // Track last status to record entry/exit times
+  let lastStatus = {};
+
   onValue(slotsRef, (snapshot) => {
     const data = snapshot.val();
-    console.log("Slots Data:", data);
-  });
-  onValue(slotsRef, (snapshot) => {
-  const data = snapshot.val();
+    let availableCount = 0;
 
-  let availableCount = 0;
+    for (let key in data) {
+      const slotElement = document.getElementById(key);
+      const status = data[key].status || "empty";
 
-  for (let key in data) {
-    const slotElement = document.getElementById(key);
+      // Update card color and text
+      if (status.toLowerCase() === "empty") {
+        slotElement.style.background = "#2ecc71";
+        slotElement.innerHTML = key.toUpperCase() + " - <span class='badge empty'>EMPTY</span>";
+        availableCount++;
+      } else {
+        slotElement.style.background = "#e74c3c";
+        slotElement.innerHTML = key.toUpperCase() + " - <span class='badge filled'>FILLED</span>";
+      }
 
-    if (data[key] === "empty") {
-      slotElement.style.background = "#2ecc71"; // green
-      slotElement.innerText = key.toUpperCase() + " - EMPTY";
-      availableCount++;
-    } else {
-      slotElement.style.background = "#e74c3c"; // red
-      slotElement.innerText = key.toUpperCase() + " - FILLED";
+      // Check for entry/exit changes
+      if (!lastStatus[key]) lastStatus[key] = status;
+
+      // Entry detected
+      if (status.toLowerCase() === "filled" && lastStatus[key] === "empty") {
+        const now = new Date().toLocaleTimeString();
+        set(ref(database, `slots/${key}/entry`), now);
+
+        // Add history record
+        const newRecord = push(historyRef);
+        set(newRecord, {
+          slot: key,
+          entry: now,
+          exit: "",
+          duration: ""
+        });
+      }
+
+      // Exit detected
+      if (status.toLowerCase() === "empty" && lastStatus[key] === "filled") {
+        const now = new Date().toLocaleTimeString();
+        set(ref(database, `slots/${key}/exit`), now);
+
+        // Update latest history record
+        onValue(historyRef, (historySnap) => {
+          const historyData = historySnap.val();
+          if (historyData) {
+            const keys = Object.keys(historyData).reverse();
+            for (let k of keys) {
+              if (historyData[k].slot === key && historyData[k].exit === "") {
+                const entryTime = new Date("1970/01/01 " + historyData[k].entry);
+                const exitTime = new Date("1970/01/01 " + now);
+                const diff = Math.floor((exitTime - entryTime)/60000); // minutes
+                set(ref(database, `history/${k}/exit`), now);
+                set(ref(database, `history/${k}/duration`), diff + " mins");
+                break;
+              }
+            }
+          }
+        }, { onlyOnce: true });
+      }
+
+      lastStatus[key] = status;
     }
-  }
 
-  // Update Available count
-  document.getElementById("available").innerText =
-    "Available: " + availableCount;
+    document.getElementById("available").innerText = "Available: " + availableCount;
+    document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
 
-  // Update time
-  document.getElementById("updated").innerText =
-    "Last Update: " + new Date().toLocaleTimeString();
-});
+    // Update history table
+    onValue(historyRef, (historySnap) => {
+      const historyData = historySnap.val();
+      const tbody = document.getElementById("historyTable");
+      tbody.innerHTML = "";
+      if (historyData) {
+        const keys = Object.keys(historyData).reverse();
+        for (let k of keys) {
+          const record = historyData[k];
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${record.slot}</td>
+            <td>${record.entry || "--"}</td>
+            <td>${record.exit || "--"}</td>
+            <td>${record.duration || "--"}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+    }, { onlyOnce: false });
+  });
 </script>
 
 </body>
 </html>
-📊 Firebase Database Structure
-
-Your database should look like:
-
-parking
-   slot1
-      status: "FULL"
-      entry: "10:30 AM"
-      exit: ""
-   slot2
-      status: "EMPTY"
-   slot3
-   slot4
-
-history
-   record1
-      slot: 1
-      entry: "10:30 AM"
-      exit: "11:15 AM"
-      duration: "45 mins"
-
-
