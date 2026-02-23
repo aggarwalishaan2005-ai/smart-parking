@@ -144,7 +144,7 @@
 
     for (let key in data) {
       const slotElement = document.getElementById(key);
-      const status = data[key].status || "empty";
+      const status = typeof data[key] === "string" ? data[key] : data[key].status || "empty";
 
       // Update card color and text
       if (status.toLowerCase() === "empty") {
@@ -229,3 +229,4 @@
 
 </body>
 </html>
+
