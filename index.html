@@ -1,171 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Smart Parking System</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking Dashboard</title>
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
+    // Replace with YOUR Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
+      authDomain: "smart-parking-60139.firebaseapp.com",
+      databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smart-parking-60139",
+      storageBucket: "smart-parking-60139.appspot.com",
+      messagingSenderId: "284320423783",
+      appId: "1:284320423783:web:535b714ab14f70597899c2"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const slotsRef = ref(database, "slots");
+
+    // Listen for real-time changes
+    onValue(slotsRef, (snapshot) => {
+      const data = snapshot.val();
+      let availableCount = 0;
+
+      for (let key in data) {
+        const slotElement = document.getElementById(key);
+
+        if (data[key] === "empty") {
+          slotElement.style.background = "#2ecc71"; // green
+          slotElement.innerText = key.toUpperCase() + " - EMPTY";
+          availableCount++;
+        } else {
+          slotElement.style.background = "#e74c3c"; // red
+          slotElement.innerText = key.toUpperCase() + " - FILLED";
+        }
+      }
+
+      // Update Available count
+      document.getElementById("available").innerText =
+        "Available: " + availableCount;
+
+      // Update time
+      document.getElementById("updated").innerText =
+        "Last Update: " + new Date().toLocaleTimeString();
+    });
+  </script>
+
+  <!-- Styling -->
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1f4037, #99f2c8);
-      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
       padding: 20px;
-      color: white;
     }
 
     h1 {
-      text-align: center;
-      margin-bottom: 30px;
+      color: #34495e;
+      margin-bottom: 20px;
     }
 
     .stats {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
+      gap: 50px;
       margin-bottom: 30px;
     }
 
+    .stats h2 {
+      background: #ecf0f1;
+      padding: 15px 30px;
+      border-radius: 10px;
+      transition: 0.3s all;
+    }
+
+    .parking-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
     .card {
-      background: rgba(255,255,255,0.1);
-      padding: 20px;
-      border-radius: 15px;
-      width: 22%;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      transition: 0.3s;
+      width: 150px;
+      height: 100px;
+      background: #bdc3c7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      transition: 0.3s all;
+      cursor: pointer;
     }
 
-    .card.full { background: rgba(255,0,0,0.7); }
-    .card.empty { background: rgba(0,128,0,0.7); }
-
-    .history {
-      margin-top: 40px;
-      background: rgba(255,255,255,0.1);
-      padding: 20px;
-      border-radius: 15px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.3);
-      text-align: center;
+    /* Hover animation */
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
     }
   </style>
 </head>
 <body>
 
-<h1>🚗 Smart Parking Dashboard</h1>
+  <h1>🚗 Smart Parking Dashboard</h1>
 
-<div class="stats">
-  <h2>Total Slots: 4</h2>
-  <h2 id="available">Available: 0</h2>
-  <h2 id="updated">Last Update: --</h2>
-</div>
+  <div class="stats">
+    <h2>Total Slots: 4</h2>
+    <h2 id="available">Available: 0</h2>
+    <h2 id="updated">Last Update: --</h2>
+  </div>
 
-<div class="stats">
-  <div id="slot1" class="card">Slot 1</div>
-  <div id="slot2" class="card">Slot 2</div>
-  <div id="slot3" class="card">Slot 3</div>
-  <div id="slot4" class="card">Slot 4</div>
-</div>
-
-<div class="history">
-  <h2>Parking History</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Slot</th>
-        <th>Entry Time</th>
-        <th>Exit Time</th>
-        <th>Duration</th>
-      </tr>
-    </thead>
-    <tbody id="historyTable"></tbody>
-  </table>
-</div>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "PASTE_YOURS",
-    authDomain: "PASTE_YOURS",
-    databaseURL: "PASTE_YOURS",
-    projectId: "PASTE_YOURS"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  db.ref("parking").on("value", (snapshot) => {
-    const data = snapshot.val();
-    if(!data) return;
-
-    let availableCount = 0;
-
-    for(let i=1;i<=4;i++){
-      let slot = data["slot"+i];
-      let element = document.getElementById("slot"+i);
-
-      element.innerHTML = `
-        <h3>Slot ${i}</h3>
-        <p>Status: ${slot.status}</p>
-        <p>Entry: ${slot.entry || "-"}</p>
-        <p>Exit: ${slot.exit || "-"}</p>
-      `;
-
-      if(slot.status === "EMPTY"){
-        element.className = "card empty";
-        availableCount++;
-      } else {
-        element.className = "card full";
-      }
-    }
-
-    document.getElementById("available").innerText = "Available: " + availableCount;
-    document.getElementById("updated").innerText =
-      "Last Update: " + new Date().toLocaleTimeString();
-  });
-
-  db.ref("history").on("child_added", (snapshot) => {
-    const record = snapshot.val();
-    const row = `
-      <tr>
-        <td>${record.slot}</td>
-        <td>${record.entry}</td>
-        <td>${record.exit}</td>
-        <td>${record.duration}</td>
-      </tr>
-    `;
-    document.getElementById("historyTable").innerHTML += row;
-  });
-
-</script>
+  <div class="parking-container">
+    <div id="slot1" class="card">Slot 1</div>
+    <div id="slot2" class="card">Slot 2</div>
+    <div id="slot3" class="card">Slot 3</div>
+    <div id="slot4" class="card">Slot 4</div>
+  </div>
 
 </body>
 </html>
-📊 Firebase Database Structure
-
-Your database should look like:
-
-parking
-   slot1
-      status: "FULL"
-      entry: "10:30 AM"
-      exit: ""
-   slot2
-      status: "EMPTY"
-   slot3
-   slot4
-
-history
-   record1
-      slot: 1
-      entry: "10:30 AM"
-      exit: "11:15 AM"
-      duration: "45 mins"
