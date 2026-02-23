@@ -1,45 +1,88 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "...",
-    authDomain: "...",
-    databaseURL: "...",
-    projectId: "...",
-    storageBucket: "...",
-    messagingSenderId: "...",
-    appId: "..."
-  };
-
+  const firebaseConfig = { ... }; // your config
   const app = initializeApp(firebaseConfig);
   const database = getDatabase(app);
-  const slotsRef = ref(database, "slots");
 
-  // ✅ PASTE IT HERE
+  const slotsRef = ref(database, "slots");
+  const historyRef = ref(database, "history");
+  let lastStatus = {};
+
   onValue(slotsRef, (snapshot) => {
     const data = snapshot.val();
-
     let availableCount = 0;
 
     for (let key in data) {
       const slotElement = document.getElementById(key);
+      const status = data[key]; // <-- read string directly
 
-      if (data[key] === "empty") {
+      // update UI
+      if (status === "empty") {
         slotElement.style.background = "#2ecc71";
-        slotElement.innerText = key.toUpperCase() + " - EMPTY";
+        slotElement.innerHTML = key.toUpperCase() + " - EMPTY";
         availableCount++;
       } else {
         slotElement.style.background = "#e74c3c";
-        slotElement.innerText = key.toUpperCase() + " - FILLED";
+        slotElement.innerHTML = key.toUpperCase() + " - FILLED";
       }
+
+      if (!lastStatus[key]) lastStatus[key] = status;
+
+      // record entry/exit
+      if (status === "filled" && lastStatus[key] === "empty") {
+        const now = new Date().toLocaleTimeString();
+        set(ref(database, `slots/${key}/entry`), now);
+        const newRecord = push(historyRef);
+        set(newRecord, { slot: key, entry: now, exit: "", duration: "" });
+      }
+      if (status === "empty" && lastStatus[key] === "filled") {
+        const now = new Date().toLocaleTimeString();
+        set(ref(database, `slots/${key}/exit`), now);
+        onValue(historyRef, (historySnap) => {
+          const historyData = historySnap.val();
+          if (historyData) {
+            const keys = Object.keys(historyData).reverse();
+            for (let k of keys) {
+              if (historyData[k].slot === key && historyData[k].exit === "") {
+                const entryTime = new Date("1970/01/01 " + historyData[k].entry);
+                const exitTime = new Date("1970/01/01 " + now);
+                const diff = Math.floor((exitTime - entryTime)/60000);
+                set(ref(database, `history/${k}/exit`), now);
+                set(ref(database, `history/${k}/duration`), diff + " mins");
+                break;
+              }
+            }
+          }
+        }, { onlyOnce: true });
+      }
+
+      lastStatus[key] = status;
     }
 
-    document.getElementById("available").innerText =
-      "Available: " + availableCount;
+    document.getElementById("available").innerText = "Available: " + availableCount;
+    document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
 
-    document.getElementById("updated").innerText =
-      "Last Update: " + new Date().toLocaleTimeString();
+    // update history table
+    onValue(historyRef, (historySnap) => {
+      const historyData = historySnap.val();
+      const tbody = document.getElementById("historyTable");
+      tbody.innerHTML = "";
+      if (historyData) {
+        const keys = Object.keys(historyData).reverse();
+        for (let k of keys) {
+          const record = historyData[k];
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${record.slot}</td>
+            <td>${record.entry || "--"}</td>
+            <td>${record.exit || "--"}</td>
+            <td>${record.duration || "--"}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+    }, { onlyOnce: false });
   });
-
 </script>
