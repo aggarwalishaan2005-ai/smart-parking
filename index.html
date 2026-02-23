@@ -120,6 +120,32 @@
     const data = snapshot.val();
     console.log("Slots Data:", data);
   });
+  onValue(slotsRef, (snapshot) => {
+  const data = snapshot.val();
+
+  let availableCount = 0;
+
+  for (let key in data) {
+    const slotElement = document.getElementById(key);
+
+    if (data[key] === "empty") {
+      slotElement.style.background = "#2ecc71"; // green
+      slotElement.innerText = key.toUpperCase() + " - EMPTY";
+      availableCount++;
+    } else {
+      slotElement.style.background = "#e74c3c"; // red
+      slotElement.innerText = key.toUpperCase() + " - FILLED";
+    }
+  }
+
+  // Update Available count
+  document.getElementById("available").innerText =
+    "Available: " + availableCount;
+
+  // Update time
+  document.getElementById("updated").innerText =
+    "Last Update: " + new Date().toLocaleTimeString();
+});
 </script>
 
 </body>
@@ -144,4 +170,5 @@ history
       entry: "10:30 AM"
       exit: "11:15 AM"
       duration: "45 mins"
+
 
