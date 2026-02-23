@@ -1,232 +1,89 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Smart Parking System</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+onValue(slotsRef, (snapshot) => {
+  const data = snapshot.val();
+  let availableCount = 0;
 
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1f4037, #99f2c8);
-      margin: 0;
-      padding: 20px;
-      color: white;
+  for (let key in data) {
+    const slotElement = document.getElementById(key);
+
+    // Use the value directly (string: "filled" / "empty")
+    const status = data[key]; 
+
+    if (status === "empty") {
+      slotElement.style.background = "#2ecc71"; // green
+      slotElement.innerHTML = key.toUpperCase() + " - <span class='badge empty'>EMPTY</span>";
+      availableCount++;
+    } else if (status === "filled") {
+      slotElement.style.background = "#e74c3c"; // red
+      slotElement.innerHTML = key.toUpperCase() + " - <span class='badge filled'>FILLED</span>";
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
+    // Track changes to record entry/exit
+    if (!lastStatus[key]) lastStatus[key] = status;
+
+    // Entry detected
+    if (status === "filled" && lastStatus[key] === "empty") {
+      const now = new Date().toLocaleTimeString();
+      set(ref(database, `slots/${key}/entry`), now);
+
+      // Add to history
+      const newRecord = push(historyRef);
+      set(newRecord, {
+        slot: key,
+        entry: now,
+        exit: "",
+        duration: ""
+      });
     }
 
-    .stats {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 30px;
-    }
+    // Exit detected
+    if (status === "empty" && lastStatus[key] === "filled") {
+      const now = new Date().toLocaleTimeString();
+      set(ref(database, `slots/${key}/exit`), now);
 
-    .card {
-      background: rgba(255,255,255,0.1);
-      padding: 20px;
-      border-radius: 15px;
-      width: 22%;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      transition: 0.3s;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .card.full { background: rgba(255,0,0,0.7); }
-    .card.empty { background: rgba(0,128,0,0.7); }
-
-    .history {
-      margin-top: 40px;
-      background: rgba(255,255,255,0.1);
-      padding: 20px;
-      border-radius: 15px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.3);
-      text-align: center;
-    }
-
-    th {
-      background: rgba(255,255,255,0.2);
-      border-radius: 5px;
-    }
-
-    .badge {
-      padding: 5px 10px;
-      border-radius: 12px;
-      font-weight: 600;
-      color: white;
-      transition: 0.3s;
-    }
-
-    .badge.filled { background-color: #e74c3c; }
-    .badge.empty { background-color: #2ecc71; }
-
-    /* Smooth hover effect for cards */
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-  </style>
-</head>
-<body>
-
-<h1>🚗 Smart Parking Dashboard</h1>
-
-<div class="stats">
-  <h2>Total Slots: 4</h2>
-  <h2 id="available">Available: 0</h2>
-  <h2 id="updated">Last Update: --</h2>
-</div>
-
-<div class="stats">
-  <div id="slot1" class="card">Slot 1</div>
-  <div id="slot2" class="card">Slot 2</div>
-  <div id="slot3" class="card">Slot 3</div>
-  <div id="slot4" class="card">Slot 4</div>
-</div>
-
-<div class="history">
-  <h2>Parking History</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Slot</th>
-        <th>Entry Time</th>
-        <th>Exit Time</th>
-        <th>Duration</th>
-      </tr>
-    </thead>
-    <tbody id="historyTable"></tbody>
-  </table>
-</div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
-    authDomain: "smart-parking-60139.firebaseapp.com",
-    databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "smart-parking-60139",
-    storageBucket: "smart-parking-60139.firebasestorage.app",
-    messagingSenderId: "284320423783",
-    appId: "1:284320423783:web:535b714ab14f70597899c2",
-    measurementId: "G-B5G3QWT90S"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
-  const slotsRef = ref(database, "slots");
-  const historyRef = ref(database, "history");
-
-  // Track last status to record entry/exit times
-  let lastStatus = {};
-
-  onValue(slotsRef, (snapshot) => {
-    const data = snapshot.val();
-    let availableCount = 0;
-
-    for (let key in data) {
-      const slotElement = document.getElementById(key);
-      const status = typeof data[key] === "string" ? data[key] : data[key].status || "empty";
-
-      // Update card color and text
-      if (status.toLowerCase() === "empty") {
-        slotElement.style.background = "#2ecc71";
-        slotElement.innerHTML = key.toUpperCase() + " - <span class='badge empty'>EMPTY</span>";
-        availableCount++;
-      } else {
-        slotElement.style.background = "#e74c3c";
-        slotElement.innerHTML = key.toUpperCase() + " - <span class='badge filled'>FILLED</span>";
-      }
-
-      // Check for entry/exit changes
-      if (!lastStatus[key]) lastStatus[key] = status;
-
-      // Entry detected
-      if (status.toLowerCase() === "filled" && lastStatus[key] === "empty") {
-        const now = new Date().toLocaleTimeString();
-        set(ref(database, `slots/${key}/entry`), now);
-
-        // Add history record
-        const newRecord = push(historyRef);
-        set(newRecord, {
-          slot: key,
-          entry: now,
-          exit: "",
-          duration: ""
-        });
-      }
-
-      // Exit detected
-      if (status.toLowerCase() === "empty" && lastStatus[key] === "filled") {
-        const now = new Date().toLocaleTimeString();
-        set(ref(database, `slots/${key}/exit`), now);
-
-        // Update latest history record
-        onValue(historyRef, (historySnap) => {
-          const historyData = historySnap.val();
-          if (historyData) {
-            const keys = Object.keys(historyData).reverse();
-            for (let k of keys) {
-              if (historyData[k].slot === key && historyData[k].exit === "") {
-                const entryTime = new Date("1970/01/01 " + historyData[k].entry);
-                const exitTime = new Date("1970/01/01 " + now);
-                const diff = Math.floor((exitTime - entryTime)/60000); // minutes
-                set(ref(database, `history/${k}/exit`), now);
-                set(ref(database, `history/${k}/duration`), diff + " mins");
-                break;
-              }
+      // Update latest history record
+      onValue(historyRef, (historySnap) => {
+        const historyData = historySnap.val();
+        if (historyData) {
+          const keys = Object.keys(historyData).reverse();
+          for (let k of keys) {
+            if (historyData[k].slot === key && historyData[k].exit === "") {
+              const entryTime = new Date("1970/01/01 " + historyData[k].entry);
+              const exitTime = new Date("1970/01/01 " + now);
+              const diff = Math.floor((exitTime - entryTime)/60000); // minutes
+              set(ref(database, `history/${k}/exit`), now);
+              set(ref(database, `history/${k}/duration`), diff + " mins");
+              break;
             }
           }
-        }, { onlyOnce: true });
-      }
-
-      lastStatus[key] = status;
+        }
+      }, { onlyOnce: true });
     }
 
-    document.getElementById("available").innerText = "Available: " + availableCount;
-    document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
+    lastStatus[key] = status;
+  }
 
-    // Update history table
-    onValue(historyRef, (historySnap) => {
-      const historyData = historySnap.val();
-      const tbody = document.getElementById("historyTable");
-      tbody.innerHTML = "";
-      if (historyData) {
-        const keys = Object.keys(historyData).reverse();
-        for (let k of keys) {
-          const record = historyData[k];
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${record.slot}</td>
-            <td>${record.entry || "--"}</td>
-            <td>${record.exit || "--"}</td>
-            <td>${record.duration || "--"}</td>
-          `;
-          tbody.appendChild(tr);
-        }
+  // Update UI
+  document.getElementById("available").innerText = "Available: " + availableCount;
+  document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
+
+  // Update history table
+  onValue(historyRef, (historySnap) => {
+    const historyData = historySnap.val();
+    const tbody = document.getElementById("historyTable");
+    tbody.innerHTML = "";
+    if (historyData) {
+      const keys = Object.keys(historyData).reverse();
+      for (let k of keys) {
+        const record = historyData[k];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${record.slot}</td>
+          <td>${record.entry || "--"}</td>
+          <td>${record.exit || "--"}</td>
+          <td>${record.duration || "--"}</td>
+        `;
+        tbody.appendChild(tr);
       }
-    }, { onlyOnce: false });
-  });
-</script>
-
-</body>
-</html>
-
+    }
+  }, { onlyOnce: false });
+});
