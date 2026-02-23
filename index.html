@@ -57,60 +57,82 @@
 
   <!-- Styling -->
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background: #f4f4f4;
-      text-align: center;
-      padding: 20px;
-    }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+    text-align: center;
+    padding: 20px;
+    color: #2c3e50;
+  }
 
-    h1 {
-      color: #34495e;
-      margin-bottom: 20px;
-    }
+  h1 {
+    color: #1f3a93;
+    margin-bottom: 25px;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+  }
 
-    .stats {
-      display: flex;
-      justify-content: center;
-      gap: 50px;
-      margin-bottom: 30px;
-    }
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 35px;
+  }
 
-    .stats h2 {
-      background: #ecf0f1;
-      padding: 15px 30px;
-      border-radius: 10px;
-      transition: 0.3s all;
-    }
+  .stats h2 {
+    background: #ffffffcc;
+    padding: 18px 35px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+    font-size: 1.2rem;
+    transition: 0.3s all;
+  }
 
-    .parking-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
+  .parking-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+  }
 
-    .card {
-      width: 150px;
-      height: 100px;
-      background: #bdc3c7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 10px;
-      color: white;
-      font-weight: bold;
-      font-size: 16px;
-      transition: 0.3s all;
-      cursor: pointer;
-    }
+  .card {
+    width: 160px;
+    height: 110px;
+    background: linear-gradient(145deg, #6dd5ed, #2193b0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    transition: 0.3s all;
+    cursor: pointer;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+  }
 
-    /* Hover animation */
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
-    }
-  </style>
+  /* Hover animation */
+  .card:hover {
+    transform: scale(1.08);
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
+  }
+
+  /* Dynamic slot colors */
+  #slot1.empty, #slot2.empty, #slot3.empty, #slot4.empty {
+    background: linear-gradient(145deg, #2ecc71, #27ae60);
+  }
+
+  #slot1.filled, #slot2.filled, #slot3.filled, #slot4.filled {
+    background: linear-gradient(145deg, #e74c3c, #c0392b);
+  }
+
+  /* Updated time text */
+  #updated {
+    font-style: italic;
+    font-size: 1rem;
+    color: #34495e;
+  }
+</style>
 </head>
 <body>
 
@@ -131,3 +153,4 @@
 
 </body>
 </html>
+
