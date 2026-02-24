@@ -66,68 +66,123 @@
 </script>
 
   <style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-    text-align: center;
-    padding: 20px;
-    color: #2c3e50;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    padding: 30px;
   }
 
   h1 {
-    color: #1f3a93;
-    margin-bottom: 25px;
-    font-size: 2.5rem;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-  }
-
-  .stats {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
+    text-align: center;
+    font-size: 2.4rem;
     margin-bottom: 35px;
+    font-weight: 600;
+    letter-spacing: 1px;
   }
 
-  .stats h2 {
-    background: #ffffffcc;
-    padding: 18px 35px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-    font-size: 1.2rem;
-  }
-
-  .parking-container {
+  /* ===== Stats Section ===== */
+  .stats {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 25px;
+    margin-bottom: 45px;
+  }
+
+  .stats h2 {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    padding: 20px 40px;
+    border-radius: 18px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    transition: 0.3s;
+  }
+
+  .stats h2:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  }
+
+  /* ===== Parking Cards ===== */
+  .parking-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 30px;
   }
 
   .card {
-    width: 160px;
-    height: 110px;
-    background: linear-gradient(145deg, #6dd5ed, #2193b0);
+    width: 180px;
+    height: 120px;
+    border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 15px;
-    color: white;
-    font-weight: bold;
+    font-weight: 600;
     font-size: 16px;
-    transition: 0.3s all;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
     cursor: pointer;
-    box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   }
 
   .card:hover {
-    transform: scale(1.08);
-    box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.5);
   }
 
+  /* Empty Slot Animation */
+  .card[style*="#2ecc71"] {
+    animation: pulseGreen 2s infinite;
+  }
+
+  @keyframes pulseGreen {
+    0% { box-shadow: 0 0 0 rgba(46, 204, 113, 0.6); }
+    50% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.9); }
+    100% { box-shadow: 0 0 0 rgba(46, 204, 113, 0.6); }
+  }
+
+  /* Filled Slot Animation */
+  .card[style*="#e74c3c"] {
+    animation: pulseRed 2s infinite;
+  }
+
+  @keyframes pulseRed {
+    0% { box-shadow: 0 0 0 rgba(231, 76, 60, 0.6); }
+    50% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.9); }
+    100% { box-shadow: 0 0 0 rgba(231, 76, 60, 0.6); }
+  }
+
+  /* Updated text styling */
   #updated {
-    font-style: italic;
-    font-size: 1rem;
-    color: #34495e;
+    font-size: 0.95rem;
+    opacity: 0.85;
+  }
+
+  /* Responsive */
+  @media(max-width: 600px){
+    .stats {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card {
+      width: 150px;
+      height: 100px;
+      font-size: 14px;
+    }
   }
 </style>
 </head>
@@ -151,4 +206,5 @@
 
 </body>
 </html>
+
 
