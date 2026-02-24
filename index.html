@@ -58,60 +58,7 @@
   });
 </script>
   
-  <!-- Firebase SDK -->
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "smart-parking-60139.firebaseapp.com",
-    databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "smart-parking-60139",
-    storageBucket: "smart-parking-60139.appspot.com",
-    messagingSenderId: "284320423783",
-    appId: "1:284320423783:web:535b714ab14f70597899c2"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const database = getDatabase(app);
-
-  // 🔐 ADMIN PROTECTION
-  onAuthStateChanged(auth, (user) => {
-    if (!user || user.email !== "admin@parking.com") {
-      window.location.href = "login.html";
-    }
-  });
-
-  // 📊 Realtime Slots Listener
-  const slotsRef = ref(database, "slots");
-
-  onValue(slotsRef, (snapshot) => {
-    const data = snapshot.val();
-    let availableCount = 0;
-
-    for (let key in data) {
-      const slotElement = document.getElementById(key);
-
-      if (data[key] === "empty") {
-        slotElement.style.background = "#2ecc71";
-        slotElement.innerText = key.toUpperCase() + " - EMPTY";
-        availableCount++;
-      } else {
-        slotElement.style.background = "#e74c3c";
-        slotElement.innerText = key.toUpperCase() + " - FILLED";
-      }
-    }
-
-    document.getElementById("available").innerText =
-      "Available: " + availableCount;
-
-    document.getElementById("updated").innerText =
-      "Last Update: " + new Date().toLocaleTimeString();
-  });
-</script>
+ 
 
   <!-- Styling -->
   <style>
@@ -211,6 +158,7 @@
 
 </body>
 </html>
+
 
 
 
