@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Parking Dashboard</title>
-  <script type="module">
+ <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
+    apiKey: "YOUR_API_KEY",
     authDomain: "smart-parking-60139.firebaseapp.com",
     databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "smart-parking-60139",
@@ -20,64 +21,97 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const database = getDatabase(app);
 
-  // Redirect to login if user is not authenticated
-  onAuthStateChanged(auth, user => {
-    if (!user) {
+  // 🔐 ADMIN PROTECTION
+  onAuthStateChanged(auth, (user) => {
+    if (!user || user.email !== "admin@parking.com") {
       window.location.href = "login.html";
     }
+  });
+
+  // 📊 Realtime Slots Listener
+  const slotsRef = ref(database, "slots");
+
+  onValue(slotsRef, (snapshot) => {
+    const data = snapshot.val();
+    let availableCount = 0;
+
+    for (let key in data) {
+      const slotElement = document.getElementById(key);
+
+      if (data[key] === "empty") {
+        slotElement.style.background = "#2ecc71";
+        slotElement.innerText = key.toUpperCase() + " - EMPTY";
+        availableCount++;
+      } else {
+        slotElement.style.background = "#e74c3c";
+        slotElement.innerText = key.toUpperCase() + " - FILLED";
+      }
+    }
+
+    document.getElementById("available").innerText =
+      "Available: " + availableCount;
+
+    document.getElementById("updated").innerText =
+      "Last Update: " + new Date().toLocaleTimeString();
   });
 </script>
   
   <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
-    // Replace with YOUR Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
-      authDomain: "smart-parking-60139.firebaseapp.com",
-      databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "smart-parking-60139",
-      storageBucket: "smart-parking-60139.appspot.com",
-      messagingSenderId: "284320423783",
-      appId: "1:284320423783:web:535b714ab14f70597899c2"
-    };
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "smart-parking-60139.firebaseapp.com",
+    databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "smart-parking-60139",
+    storageBucket: "smart-parking-60139.appspot.com",
+    messagingSenderId: "284320423783",
+    appId: "1:284320423783:web:535b714ab14f70597899c2"
+  };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const database = getDatabase(app);
 
-    const slotsRef = ref(database, "slots");
+  // 🔐 ADMIN PROTECTION
+  onAuthStateChanged(auth, (user) => {
+    if (!user || user.email !== "admin@parking.com") {
+      window.location.href = "login.html";
+    }
+  });
 
-    // Listen for real-time changes
-    onValue(slotsRef, (snapshot) => {
-      const data = snapshot.val();
-      let availableCount = 0;
+  // 📊 Realtime Slots Listener
+  const slotsRef = ref(database, "slots");
 
-      for (let key in data) {
-        const slotElement = document.getElementById(key);
+  onValue(slotsRef, (snapshot) => {
+    const data = snapshot.val();
+    let availableCount = 0;
 
-        if (data[key] === "empty") {
-          slotElement.style.background = "#2ecc71"; // green
-          slotElement.innerText = key.toUpperCase() + " - EMPTY";
-          availableCount++;
-        } else {
-          slotElement.style.background = "#e74c3c"; // red
-          slotElement.innerText = key.toUpperCase() + " - FILLED";
-        }
+    for (let key in data) {
+      const slotElement = document.getElementById(key);
+
+      if (data[key] === "empty") {
+        slotElement.style.background = "#2ecc71";
+        slotElement.innerText = key.toUpperCase() + " - EMPTY";
+        availableCount++;
+      } else {
+        slotElement.style.background = "#e74c3c";
+        slotElement.innerText = key.toUpperCase() + " - FILLED";
       }
+    }
 
-      // Update Available count
-      document.getElementById("available").innerText =
-        "Available: " + availableCount;
+    document.getElementById("available").innerText =
+      "Available: " + availableCount;
 
-      // Update time
-      document.getElementById("updated").innerText =
-        "Last Update: " + new Date().toLocaleTimeString();
-    });
-  </script>
+    document.getElementById("updated").innerText =
+      "Last Update: " + new Date().toLocaleTimeString();
+  });
+</script>
 
   <!-- Styling -->
   <style>
@@ -177,5 +211,6 @@
 
 </body>
 </html>
+
 
 
