@@ -24,56 +24,203 @@
   const auth = getAuth(app);
   const database = getDatabase(app);
 
-  // 🔐 ADMIN PROTECTION
-  onAuthStateChanged(auth, (user) => {
-    if (!user || user.email !== "admin@parking.com") {
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("userEmail").innerText = user.email;
-    }
-  });
+  window.addEventListener("load", () => {
 
-  // 🔓 Logout
-  window.logout = async () => {
-    await signOut(auth);
-    window.location.href = "login.html";
-  };
-
-  // 📊 Realtime Slots Listener (Optimized Connection Handling)
-  const slotsRef = ref(database, "slots");
-
-  function handleSlots(snapshot) {
-    const data = snapshot.val();
-    let availableCount = 0;
-
-    if (!data) return;
-
-    for (let key in data) {
-      const slotElement = document.getElementById(key);
-
-      if (data[key] === "empty") {
-        slotElement.style.background = "#2ecc71";
-        slotElement.innerText = key.toUpperCase() + " - EMPTY";
-        availableCount++;
+    // 🔐 ADMIN PROTECTION
+    onAuthStateChanged(auth, (user) => {
+      if (!user || user.email !== "admin@parking.com") {
+        window.location.href = "login.html";
       } else {
-        slotElement.style.background = "#e74c3c";
-        slotElement.innerText = key.toUpperCase() + " - FILLED";
+        const userEl = document.getElementById("userEmail");
+        if (userEl) userEl.innerText = user.email;
       }
+    });
+
+    // 🔓 Logout
+    window.logout = async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+
+    // 📊 Realtime Slots Listener
+    const slotsRef = ref(database, "slots");
+
+    function handleSlots(snapshot) {
+      const data = snapshot.val();
+      let availableCount = 0;
+
+      if (!data) return;
+
+      for (let key in data) {
+        const slotElement = document.getElementById(key);
+        if (!slotElement) continue;
+
+        if (data[key] === "empty") {
+          slotElement.style.background = "#2ecc71";
+          slotElement.innerText = key.toUpperCase() + " - EMPTY";
+          availableCount++;
+        } else {
+          slotElement.style.background = "#e74c3c";
+          slotElement.innerText = key.toUpperCase() + " - FILLED";
+        }
+      }
+
+      const availableEl = document.getElementById("available");
+      const updatedEl = document.getElementById("updated");
+      if (availableEl) availableEl.innerText = "Available: " + availableCount;
+      if (updatedEl) updatedEl.innerText = "Last Update: " + new Date().toLocaleTimeString();
     }
 
-    document.getElementById("available").innerText =
-      "Available: " + availableCount;
+    // Attach listener
+    onValue(slotsRef, handleSlots);
 
-    document.getElementById("updated").innerText =
-      "Last Update: " + new Date().toLocaleTimeString();
+    // Properly detach listener when page closes
+    window.addEventListener("beforeunload", () => {
+      off(slotsRef, "value", handleSlots);
+    });
+
+  });
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+  :root {
+    --bg: linear-gradient(135deg, #eef2f7, #d9e2ec);
+    --card-bg: #ffffff;
+    --text: #1f2937;
   }
 
-  // Attach listener
-  onValue(slotsRef, handleSlots);
+  body.dark {
+    --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    --card-bg: rgba(255,255,255,0.1);
+    --text: #ffffff;
+  }
 
-  // Properly detach listener when page closes
-  window.addEventListener("beforeunload", () => {
-    off(slotsRef, "value", handleSlots);
-  });
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    padding: 30px;
+    transition: 0.3s ease;
+  }
 
+  .top-bar {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .user-badge {
+    background: var(--card-bg);
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+
+  .toggle-btn, .logout-btn {
+    padding: 8px 15px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: white;
+    transition: 0.3s;
+  }
+
+  .toggle-btn { background: #2563eb; }
+  .logout-btn { background: #e74c3c; }
+
+  .toggle-btn:hover, .logout-btn:hover { transform: scale(1.05); }
+
+  h1 { text-align: center; font-size: 2.5rem; margin-bottom: 50px; font-weight: 600; }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-bottom: 45px;
+  }
+
+  .stats h2 {
+    background: var(--card-bg);
+    padding: 20px 40px;
+    border-radius: 18px;
+    font-size: 1.1rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: 0.3s;
+  }
+
+  .stats h2:hover { transform: translateY(-5px); }
+
+  .parking-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .card {
+    width: 190px;
+    height: 120px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 1px;
+    transition: 0.3s;
+    cursor: pointer;
+    background: var(--card-bg);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+
+  .card:hover { transform: translateY(-8px) scale(1.05); }
+
+  #updated { font-size: 0.95rem; opacity: 0.85; }
+</style>
+</head>
+
+<body>
+
+<div class="top-bar">
+  <div class="user-badge">👤 <span id="userEmail">Loading...</span></div>
+  <button class="toggle-btn" onclick="toggleMode()" id="modeBtn">🌙 Dark Mode</button>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<h1>🚗 Smart Parking Dashboard</h1>
+
+<div class="stats">
+  <h2>Total Slots: 4</h2>
+  <h2 id="available">Available: 0</h2>
+  <h2 id="updated">Last Update: --</h2>
+</div>
+
+<div class="parking-container">
+  <div id="slot1" class="card">Slot 1</div>
+  <div id="slot2" class="card">Slot 2</div>
+  <div id="slot3" class="card">Slot 3</div>
+  <div id="slot4" class="card">Slot 4</div>
+</div>
+
+<script>
+  function toggleMode() {
+    const body = document.body;
+    const btn = document.getElementById("modeBtn");
+
+    body.classList.toggle("dark");
+
+    btn.innerText = body.classList.contains("dark") ? "☀ Light Mode" : "🌙 Dark Mode";
+  }
 </script>
+
+</body>
+</html>
