@@ -36,7 +36,7 @@
     signOut(auth);
   });
 
-  // 📊 Realtime Slots Listener (YOUR ORIGINAL LOGIC)
+  // 📊 Realtime Slots Listener (ORIGINAL LOGIC UNCHANGED)
   const slotsRef = ref(database, "slots");
 
   onValue(slotsRef, (snapshot) => {
@@ -62,10 +62,9 @@
     document.getElementById("updated").innerText =
       "Last Update: " + new Date().toLocaleTimeString();
   });
-
 </script>
 
-  <style>
+<style>
   * {
     margin: 0;
     padding: 0;
@@ -73,22 +72,60 @@
     font-family: 'Poppins', sans-serif;
   }
 
+  :root {
+    --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    --card-bg: rgba(255,255,255,0.1);
+    --text: #ffffff;
+  }
+
+  body.light {
+    --bg: linear-gradient(135deg, #eef2f7, #d9e2ec);
+    --card-bg: #ffffff;
+    --text: #1f2937;
+  }
+
   body {
     min-height: 100vh;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: white;
+    background: var(--bg);
+    color: var(--text);
     padding: 30px;
+    transition: 0.3s ease;
   }
 
   h1 {
     text-align: center;
-    font-size: 2.4rem;
+    font-size: 2.5rem;
     margin-bottom: 35px;
     font-weight: 600;
     letter-spacing: 1px;
   }
 
-  /* ===== Stats Section ===== */
+  /* Toggle Button */
+  .toggle-btn {
+    position: absolute;
+    top: 25px;
+    right: 30px;
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: none;
+    background: #ffffff22;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
+  }
+
+  .toggle-btn:hover {
+    transform: scale(1.05);
+  }
+
+  body.light .toggle-btn {
+    background: #1f2937;
+    color: white;
+  }
+
+  /* Stats */
   .stats {
     display: flex;
     justify-content: center;
@@ -98,7 +135,7 @@
   }
 
   .stats h2 {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--card-bg);
     backdrop-filter: blur(12px);
     padding: 20px 40px;
     border-radius: 18px;
@@ -110,10 +147,9 @@
 
   .stats h2:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
   }
 
-  /* ===== Parking Cards ===== */
+  /* Cards */
   .parking-container {
     display: flex;
     justify-content: center;
@@ -122,7 +158,7 @@
   }
 
   .card {
-    width: 180px;
+    width: 190px;
     height: 120px;
     border-radius: 20px;
     display: flex;
@@ -131,80 +167,56 @@
     font-weight: 600;
     font-size: 16px;
     letter-spacing: 1px;
-    transition: all 0.3s ease;
+    transition: 0.3s;
     cursor: pointer;
-    background: rgba(255,255,255,0.1);
+    background: var(--card-bg);
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   }
 
   .card:hover {
     transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 20px 45px rgba(0,0,0,0.5);
   }
 
-  /* Empty Slot Animation */
-  .card[style*="#2ecc71"] {
-    animation: pulseGreen 2s infinite;
-  }
-
-  @keyframes pulseGreen {
-    0% { box-shadow: 0 0 0 rgba(46, 204, 113, 0.6); }
-    50% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.9); }
-    100% { box-shadow: 0 0 0 rgba(46, 204, 113, 0.6); }
-  }
-
-  /* Filled Slot Animation */
-  .card[style*="#e74c3c"] {
-    animation: pulseRed 2s infinite;
-  }
-
-  @keyframes pulseRed {
-    0% { box-shadow: 0 0 0 rgba(231, 76, 60, 0.6); }
-    50% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.9); }
-    100% { box-shadow: 0 0 0 rgba(231, 76, 60, 0.6); }
-  }
-
-  /* Updated text styling */
   #updated {
     font-size: 0.95rem;
     opacity: 0.85;
   }
 
-  /* Responsive */
   @media(max-width: 600px){
     .stats {
       flex-direction: column;
       align-items: center;
     }
-
-    .card {
-      width: 150px;
-      height: 100px;
-      font-size: 14px;
-    }
   }
 </style>
+
 </head>
 
 <body>
 
-  <h1>🚗 Smart Parking Dashboard</h1>
+<button class="toggle-btn" onclick="toggleMode()">🌙 Toggle Mode</button>
 
-  <div class="stats">
-    <h2>Total Slots: 4</h2>
-    <h2 id="available">Available: 0</h2>
-    <h2 id="updated">Last Update: --</h2>
-  </div>
+<h1>🚗 Smart Parking Dashboard</h1>
 
-  <div class="parking-container">
-    <div id="slot1" class="card">Slot 1</div>
-    <div id="slot2" class="card">Slot 2</div>
-    <div id="slot3" class="card">Slot 3</div>
-    <div id="slot4" class="card">Slot 4</div>
-  </div>
+<div class="stats">
+  <h2>Total Slots: 4</h2>
+  <h2 id="available">Available: 0</h2>
+  <h2 id="updated">Last Update: --</h2>
+</div>
+
+<div class="parking-container">
+  <div id="slot1" class="card">Slot 1</div>
+  <div id="slot2" class="card">Slot 2</div>
+  <div id="slot3" class="card">Slot 3</div>
+  <div id="slot4" class="card">Slot 4</div>
+</div>
+
+<script>
+  function toggleMode() {
+    document.body.classList.toggle("light");
+  }
+</script>
 
 </body>
 </html>
-
-
