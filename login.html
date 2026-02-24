@@ -1,157 +1,196 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin Login</title>
+  <meta charset="UTF-8">
+  <title>Smart Parking Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword,
-      setPersistence,
-      browserLocalPersistence,
-      browserSessionPersistence
-    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
     const firebaseConfig = {
-       apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
+      apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
       authDomain: "smart-parking-60139.firebaseapp.com",
+      databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "smart-parking-60139",
+      storageBucket: "smart-parking-60139.appspot.com",
+      messagingSenderId: "284320423783",
       appId: "1:284320423783:web:535b714ab14f70597899c2"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Autofill saved email
-    window.onload = () => {
-      const savedEmail = localStorage.getItem("savedEmail");
-      if (savedEmail) {
-        document.getElementById("email").value = savedEmail;
-        document.getElementById("rememberMe").checked = true;
-      }
-    };
-
-    window.login = async () => {
+    window.login = async function () {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      const remember = document.getElementById("rememberMe").checked;
+      const remember = document.getElementById("remember").checked;
 
       try {
+        await signInWithEmailAndPassword(auth, email, password);
 
         if (remember) {
-          await setPersistence(auth, browserLocalPersistence);
-          localStorage.setItem("savedEmail", email);
+          localStorage.setItem("rememberEmail", email);
+          localStorage.setItem("rememberPassword", password);
         } else {
-          await setPersistence(auth, browserSessionPersistence);
-          localStorage.removeItem("savedEmail");
+          localStorage.removeItem("rememberEmail");
+          localStorage.removeItem("rememberPassword");
         }
 
-        const userCred = await signInWithEmailAndPassword(auth, email, password);
-
-        if (userCred.user.email === "admin@parking.com") {
-          window.location.href = "index.html";
-        } else {
-          alert("Not authorized");
-        }
-
+        window.location.href = "dashboard.html";
       } catch (error) {
-        alert(error.message);
+        alert("Login Failed: " + error.message);
       }
-    };
-
-    // Show password toggle
-    window.togglePassword = () => {
-      const passField = document.getElementById("password");
-      passField.type = passField.type === "password" ? "text" : "password";
     };
   </script>
 
   <style>
-    body {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1f4037, #99f2c8);
+    }
+
+    body {
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
     }
 
     .login-box {
-      background: white;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(15px);
       padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-      width: 320px;
+      border-radius: 20px;
+      width: 350px;
       text-align: center;
+      color: white;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+
+    .logo {
+      width: 90px;
+      margin-bottom: 20px;
     }
 
     h2 {
       margin-bottom: 25px;
+      font-weight: 600;
     }
 
     input {
       width: 100%;
       padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
     }
 
-    button {
+    .password-wrapper {
+      position: relative;
+    }
+
+    .show-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    .remember-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .remember-container input {
+      width: auto;
+      margin-right: 8px;
+    }
+
+    button.login-btn {
       width: 100%;
       padding: 12px;
-      margin-top: 15px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
-      background: #1f4037;
+      background: #2563eb;
       color: white;
-      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
       transition: 0.3s;
     }
 
-    button:hover {
-      background: #16332d;
-    }
-
-    .options {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-
-    .options label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
+    button.login-btn:hover {
+      background: #1d4ed8;
     }
   </style>
 </head>
 
 <body>
+
   <div class="login-box">
-    <h2>Admin Login</h2>
 
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
+    <!-- 🔹 ADD YOUR LOGO HERE -->
+    <img src="logo.jpeg" class="logo" alt="Logo">
 
-    <div class="options">
-      <label>
-        <input type="checkbox" id="rememberMe"> Remember Me
-      </label>
+    <h2>Smart Parking Login</h2>
 
-      <label>
-        <input type="checkbox" onclick="togglePassword()"> Show
-      </label>
+    <input type="email" id="email" placeholder="Enter Email">
+
+    <div class="password-wrapper">
+      <input type="password" id="password" placeholder="Enter Password">
+      <button type="button" class="show-btn" onclick="togglePassword()" id="showBtn">
+        Show Password
+      </button>
     </div>
 
-    <button onclick="login()">Login</button>
+    <div class="remember-container">
+      <input type="checkbox" id="remember">
+      <label for="remember">Remember Me</label>
+    </div>
+
+    <button class="login-btn" onclick="login()">Login</button>
+
   </div>
+
+<script>
+  // Auto Fill if remembered
+  window.onload = function () {
+    const savedEmail = localStorage.getItem("rememberEmail");
+    const savedPassword = localStorage.getItem("rememberPassword");
+
+    if (savedEmail && savedPassword) {
+      document.getElementById("email").value = savedEmail;
+      document.getElementById("password").value = savedPassword;
+      document.getElementById("remember").checked = true;
+    }
+  };
+
+  function togglePassword() {
+    const passField = document.getElementById("password");
+    const btn = document.getElementById("showBtn");
+
+    if (passField.type === "password") {
+      passField.type = "text";
+      btn.innerText = "Hide Password";
+    } else {
+      passField.type = "password";
+      btn.innerText = "Show Password";
+    }
+  }
+</script>
+
 </body>
 </html>
