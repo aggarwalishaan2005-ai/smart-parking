@@ -24,10 +24,12 @@
   const auth = getAuth(app);
   const database = getDatabase(app);
 
-  // 🔐 ADMIN PROTECTION
+  // 🔐 ADMIN PROTECTION + SHOW USER EMAIL
   onAuthStateChanged(auth, (user) => {
     if (!user || user.email !== "admin@parking.com") {
       window.location.href = "login.html";
+    } else {
+      document.getElementById("userEmail").innerText = user.email;
     }
   });
 
@@ -36,7 +38,7 @@
     signOut(auth);
   });
 
-  // 📊 Realtime Slots Listener (ORIGINAL LOGIC UNCHANGED)
+  // 📊 Realtime Slots Listener (UNCHANGED LOGIC)
   const slotsRef = ref(database, "slots");
 
   onValue(slotsRef, (snapshot) => {
@@ -73,15 +75,15 @@
   }
 
   :root {
-    --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    --card-bg: rgba(255,255,255,0.1);
-    --text: #ffffff;
-  }
-
-  body.light {
     --bg: linear-gradient(135deg, #eef2f7, #d9e2ec);
     --card-bg: #ffffff;
     --text: #1f2937;
+  }
+
+  body.dark {
+    --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    --card-bg: rgba(255,255,255,0.1);
+    --text: #ffffff;
   }
 
   body {
@@ -92,27 +94,33 @@
     transition: 0.3s ease;
   }
 
-  h1 {
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 35px;
-    font-weight: 600;
-    letter-spacing: 1px;
+  /* ===== Top Bar ===== */
+  .top-bar {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
   }
 
-  /* Toggle Button */
+  .user-badge {
+    background: var(--card-bg);
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+
   .toggle-btn {
-    position: absolute;
-    top: 25px;
-    right: 30px;
-    padding: 10px 20px;
-    border-radius: 30px;
+    padding: 8px 15px;
+    border-radius: 25px;
     border: none;
-    background: #ffffff22;
-    color: white;
     cursor: pointer;
     font-weight: 500;
-    backdrop-filter: blur(10px);
+    background: #2563eb;
+    color: white;
     transition: 0.3s;
   }
 
@@ -120,12 +128,13 @@
     transform: scale(1.05);
   }
 
-  body.light .toggle-btn {
-    background: #1f2937;
-    color: white;
+  h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 50px;
+    font-weight: 600;
   }
 
-  /* Stats */
   .stats {
     display: flex;
     justify-content: center;
@@ -136,12 +145,10 @@
 
   .stats h2 {
     background: var(--card-bg);
-    backdrop-filter: blur(12px);
     padding: 20px 40px;
     border-radius: 18px;
     font-size: 1.1rem;
-    font-weight: 500;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     transition: 0.3s;
   }
 
@@ -149,7 +156,6 @@
     transform: translateY(-5px);
   }
 
-  /* Cards */
   .parking-container {
     display: flex;
     justify-content: center;
@@ -170,8 +176,7 @@
     transition: 0.3s;
     cursor: pointer;
     background: var(--card-bg);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   }
 
   .card:hover {
@@ -183,19 +188,15 @@
     opacity: 0.85;
   }
 
-  @media(max-width: 600px){
-    .stats {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
 </style>
-
 </head>
 
 <body>
 
-<button class="toggle-btn" onclick="toggleMode()">🌙 Dark Mode</button>
+<div class="top-bar">
+  <div class="user-badge">👤 <span id="userEmail">Loading...</span></div>
+  <button class="toggle-btn" onclick="toggleMode()">🌙 Dark Mode</button>
+</div>
 
 <h1>🚗 Smart Parking Dashboard</h1>
 
@@ -214,10 +215,9 @@
 
 <script>
   function toggleMode() {
-    document.body.classList.toggle("light");
+    document.body.classList.toggle("dark");
   }
 </script>
 
 </body>
 </html>
-
