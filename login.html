@@ -4,12 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login - Smart Parking</title>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      onAuthStateChanged,
+      setPersistence,
+      browserSessionPersistence
+    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
+      apiKey: "YOUR_API_KEY",
       authDomain: "smart-parking-60139.firebaseapp.com",
       databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "smart-parking-60139",
@@ -21,9 +28,9 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Redirect logged-in users directly to dashboard
+    // If already logged in in same session → go to dashboard
     onAuthStateChanged(auth, user => {
-      if (user) {
+      if (user && user.email === "admin@parking.com") {
         window.location.href = "index.html";
       }
     });
@@ -33,10 +40,17 @@
       const password = document.getElementById("password").value;
 
       try {
+
+        // 🔐 Session only login (clears after browser close)
+        await setPersistence(auth, browserSessionPersistence);
+
         await signInWithEmailAndPassword(auth, email, password);
+
         window.location.href = "index.html";
+
       } catch (error) {
-        document.getElementById("errorMsg").innerText = "Login failed: " + error.message;
+        document.getElementById("errorMsg").innerText =
+          "Login failed: " + error.message;
         document.getElementById("errorMsg").style.display = "block";
       }
     };
@@ -52,26 +66,64 @@
       margin: 0;
       background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
     }
+
     .login-container {
       background: white;
       padding: 40px;
       border-radius: 15px;
       box-shadow: 0px 10px 30px rgba(0,0,0,0.1);
-      width: 300px;
+      width: 320px;
       text-align: center;
     }
-    input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
-    button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #1f3a93; color: white; font-size: 16px; cursor: pointer; }
-    button:hover { background: #34495e; }
-    .error { color: red; display: none; margin-top: 10px; font-size: 0.9rem; }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #1f3a93;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: #1f3a93;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #34495e;
+    }
+
+    .error {
+      color: red;
+      display: none;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
+
 <body>
   <div class="login-container">
     <h2>Admin Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
+
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+
     <button onclick="login()">Login</button>
+
     <div id="errorMsg" class="error"></div>
   </div>
 </body>
