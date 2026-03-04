@@ -11,7 +11,7 @@
   import { getDatabase, ref, onValue, off } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
+    apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
     authDomain: "smart-parking-60139.firebaseapp.com",
     databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "smart-parking-60139",
@@ -26,15 +26,20 @@
 
   window.addEventListener("load", () => {
 
-    // 🔓 LOGIN DISABLED (NO REDIRECT)
+    // 🔐 ADMIN PROTECTION
     onAuthStateChanged(auth, (user) => {
-      console.log("Login protection disabled");
+      if (!user || user.email !== "admin@parking.com") {
+        window.location.href = "login.html";
+      } else {
+        const userEl = document.getElementById("userEmail");
+        if (userEl) userEl.innerText = user.email;
+      }
     });
 
-    // Logout (optional - still works if you want)
+    // 🔓 Logout
     window.logout = async () => {
       await signOut(auth);
-      alert("Logged out");
+      window.location.href = "login.html";
     };
 
     // 📊 Realtime Slots Listener
@@ -51,22 +56,25 @@
         if (!slotElement) continue;
 
         if (data[key] === "empty") {
-          slotElement.style.background = "#2ecc71"; // GREEN
+          slotElement.style.background = "#2ecc71";
           slotElement.innerText = key.toUpperCase() + " - EMPTY";
           availableCount++;
         } else {
-          slotElement.style.background = "#e74c3c"; // RED
+          slotElement.style.background = "#e74c3c";
           slotElement.innerText = key.toUpperCase() + " - FILLED";
         }
       }
 
-      document.getElementById("available").innerText = "Available: " + availableCount;
-      document.getElementById("updated").innerText =
-        "Last Update: " + new Date().toLocaleTimeString();
+      const availableEl = document.getElementById("available");
+      const updatedEl = document.getElementById("updated");
+      if (availableEl) availableEl.innerText = "Available: " + availableCount;
+      if (updatedEl) updatedEl.innerText = "Last Update: " + new Date().toLocaleTimeString();
     }
 
+    // Attach listener
     onValue(slotsRef, handleSlots);
 
+    // Properly detach listener when page closes
     window.addEventListener("beforeunload", () => {
       off(slotsRef, "value", handleSlots);
     });
@@ -102,25 +110,35 @@
     top: 20px;
     right: 30px;
     display: flex;
+    align-items: center;
     gap: 15px;
   }
 
-  .toggle-btn {
+  .user-badge {
+    background: var(--card-bg);
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+
+  .toggle-btn, .logout-btn {
     padding: 8px 15px;
     border-radius: 25px;
     border: none;
     cursor: pointer;
     font-weight: 500;
-    background: #2563eb;
     color: white;
+    transition: 0.3s;
   }
 
-  h1 {
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 50px;
-    font-weight: 600;
-  }
+  .toggle-btn { background: #2563eb; }
+  .logout-btn { background: #e74c3c; }
+
+  .toggle-btn:hover, .logout-btn:hover { transform: scale(1.05); }
+
+  h1 { text-align: center; font-size: 2.5rem; margin-bottom: 50px; font-weight: 600; }
 
   .stats {
     display: flex;
@@ -136,7 +154,10 @@
     border-radius: 18px;
     font-size: 1.1rem;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: 0.3s;
   }
+
+  .stats h2:hover { transform: translateY(-5px); }
 
   .parking-container {
     display: flex;
@@ -161,6 +182,8 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   }
 
+  .card:hover { transform: translateY(-8px) scale(1.05); }
+
   #updated { font-size: 0.95rem; opacity: 0.85; }
 </style>
 </head>
@@ -168,7 +191,9 @@
 <body>
 
 <div class="top-bar">
+  <div class="user-badge">👤 <span id="userEmail">Loading...</span></div>
   <button class="toggle-btn" onclick="toggleMode()" id="modeBtn">🌙 Dark Mode</button>
+  <button class="logout-btn" onclick="logout()">Logout</button>
 </div>
 
 <h1>🚗 Smart Parking Dashboard</h1>
@@ -192,9 +217,8 @@
     const btn = document.getElementById("modeBtn");
 
     body.classList.toggle("dark");
-    btn.innerText = body.classList.contains("dark")
-      ? "☀ Light Mode"
-      : "🌙 Dark Mode";
+
+    btn.innerText = body.classList.contains("dark") ? "☀ Light Mode" : "🌙 Dark Mode";
   }
 </script>
 
