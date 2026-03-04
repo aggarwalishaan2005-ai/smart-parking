@@ -7,6 +7,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
   import { getDatabase, ref, onValue, off } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -20,10 +21,23 @@
   };
 
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const database = getDatabase(app);
 
   window.addEventListener("load", () => {
 
+    // 🔓 LOGIN DISABLED (NO REDIRECT)
+    onAuthStateChanged(auth, (user) => {
+      console.log("Login protection disabled");
+    });
+
+    // Logout (optional - still works if you want)
+    window.logout = async () => {
+      await signOut(auth);
+      alert("Logged out");
+    };
+
+    // 📊 Realtime Slots Listener
     const slotsRef = ref(database, "slots");
 
     function handleSlots(snapshot) {
@@ -37,20 +51,18 @@
         if (!slotElement) continue;
 
         if (data[key] === "empty") {
-          slotElement.style.background = "#2ecc71";
+          slotElement.style.background = "#2ecc71"; // GREEN
           slotElement.innerText = key.toUpperCase() + " - EMPTY";
           availableCount++;
         } else {
-          slotElement.style.background = "#e74c3c";
+          slotElement.style.background = "#e74c3c"; // RED
           slotElement.innerText = key.toUpperCase() + " - FILLED";
         }
       }
 
-      const availableEl = document.getElementById("available");
-      const updatedEl = document.getElementById("updated");
-
-      if (availableEl) availableEl.innerText = "Available: " + availableCount;
-      if (updatedEl) updatedEl.innerText = "Last Update: " + new Date().toLocaleTimeString();
+      document.getElementById("available").innerText = "Available: " + availableCount;
+      document.getElementById("updated").innerText =
+        "Last Update: " + new Date().toLocaleTimeString();
     }
 
     onValue(slotsRef, handleSlots);
@@ -85,7 +97,30 @@
     transition: 0.3s ease;
   }
 
-  h1 { text-align: center; font-size: 2.5rem; margin-bottom: 50px; font-weight: 600; }
+  .top-bar {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    gap: 15px;
+  }
+
+  .toggle-btn {
+    padding: 8px 15px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    background: #2563eb;
+    color: white;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 50px;
+    font-weight: 600;
+  }
 
   .stats {
     display: flex;
@@ -101,7 +136,6 @@
     border-radius: 18px;
     font-size: 1.1rem;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    transition: 0.3s;
   }
 
   .parking-container {
@@ -128,25 +162,14 @@
   }
 
   #updated { font-size: 0.95rem; opacity: 0.85; }
-
-  .toggle-btn {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    padding: 8px 15px;
-    border-radius: 25px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    background: #2563eb;
-    color: white;
-  }
 </style>
 </head>
 
 <body>
 
-<button class="toggle-btn" onclick="toggleMode()" id="modeBtn">🌙 Dark Mode</button>
+<div class="top-bar">
+  <button class="toggle-btn" onclick="toggleMode()" id="modeBtn">🌙 Dark Mode</button>
+</div>
 
 <h1>🚗 Smart Parking Dashboard</h1>
 
@@ -169,8 +192,9 @@
     const btn = document.getElementById("modeBtn");
 
     body.classList.toggle("dark");
-
-    btn.innerText = body.classList.contains("dark") ? "☀ Light Mode" : "🌙 Dark Mode";
+    btn.innerText = body.classList.contains("dark")
+      ? "☀ Light Mode"
+      : "🌙 Dark Mode";
   }
 </script>
 
