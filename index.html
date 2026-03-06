@@ -1,234 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Parking Dashboard</title>
+<title>Smart Parking System</title>
 
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getDatabase, ref, onValue, off, set } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-
-const firebaseConfig = {
-apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
-authDomain: "smart-parking-60139.firebaseapp.com",
-databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId: "smart-parking-60139",
-storageBucket: "smart-parking-60139.appspot.com",
-messagingSenderId: "284320423783",
-appId: "1:284320423783:web:535b714ab14f70597899c2"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const database = getDatabase(app);
-
-window.addEventListener("load", () => {
-
-onAuthStateChanged(auth, (user) => {
-if (!user || user.email !== "admin@parking.com") {
-window.location.href = "login.html";
-} else {
-const userEl = document.getElementById("userEmail");
-if (userEl) userEl.innerText = user.email;
-}
-});
-
-window.logout = async () => {
-await signOut(auth);
-window.location.href = "login.html";
-};
-
-const slotsRef = ref(database, "slots");
-
-function handleSlots(snapshot) {
-
-const data = snapshot.val();
-let availableCount = 0;
-
-if (!data) return;
-
-for (let key in data) {
-
-const slotElement = document.getElementById(key);
-if (!slotElement) continue;
-
-if (data[key] === "empty") {
-
-slotElement.style.background = "#2ecc71";
-slotElement.innerText = key.toUpperCase() + " - EMPTY";
-availableCount++;
-
-}
-
-else if (data[key] === "filled") {
-
-slotElement.style.background = "#e74c3c";
-slotElement.innerText = key.toUpperCase() + " - FILLED";
-
-}
-
-else if (data[key] === "booked") {
-
-slotElement.style.background = "#f1c40f";
-slotElement.innerText = key.toUpperCase() + " - BOOKED";
-
-}
-
-}
-
-const availableEl = document.getElementById("available");
-const updatedEl = document.getElementById("updated");
-
-if (availableEl) availableEl.innerText = "Available: " + availableCount;
-if (updatedEl) updatedEl.innerText = "Last Update: " + new Date().toLocaleTimeString();
-
-}
-
-onValue(slotsRef, handleSlots);
-
-window.addEventListener("beforeunload", () => {
-off(slotsRef, "value", handleSlots);
-});
-
-});
-
-/* booking function */
-
-window.bookSlot = function(slot){
-
-const database = getDatabase();
-const slotRef = ref(database, "slots/" + slot);
-
-set(slotRef, "booked");
-
-}
-
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-
-:root{
---bg:linear-gradient(135deg,#eef2f7,#d9e2ec);
---card-bg:#ffffff;
---text:#1f2937;
-}
-
-body.dark{
---bg:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
---card-bg:rgba(255,255,255,0.1);
---text:#ffffff;
-}
-
 body{
-min-height:100vh;
-background:var(--bg);
-color:var(--text);
-padding:30px;
-transition:0.3s ease;
-}
-
-.top-bar{
-position:absolute;
-top:20px;
-right:30px;
-display:flex;
-align-items:center;
-gap:15px;
-}
-
-.user-badge{
-background:var(--card-bg);
-padding:8px 15px;
-border-radius:25px;
-font-size:0.9rem;
-font-weight:500;
-box-shadow:0 4px 15px rgba(0,0,0,0.15);
-}
-
-.toggle-btn,.logout-btn{
-padding:8px 15px;
-border-radius:25px;
-border:none;
-cursor:pointer;
-font-weight:500;
+font-family:'Poppins',sans-serif;
+background:linear-gradient(135deg,#1f4037,#99f2c8);
+margin:0;
+padding:20px;
 color:white;
-transition:0.3s;
 }
-
-.toggle-btn{background:#2563eb;}
-.logout-btn{background:#e74c3c;}
-
-.toggle-btn:hover,.logout-btn:hover{transform:scale(1.05);}
 
 h1{
 text-align:center;
-font-size:2.5rem;
-margin-bottom:50px;
-font-weight:600;
+margin-bottom:30px;
 }
 
 .stats{
 display:flex;
-justify-content:center;
-flex-wrap:wrap;
-gap:25px;
-margin-bottom:45px;
-}
-
-.stats h2{
-background:var(--card-bg);
-padding:20px 40px;
-border-radius:18px;
-font-size:1.1rem;
-box-shadow:0 8px 25px rgba(0,0,0,0.15);
-transition:0.3s;
-}
-
-.stats h2:hover{transform:translateY(-5px);}
-
-.parking-container{
-display:flex;
-justify-content:center;
-flex-wrap:wrap;
-gap:30px;
+justify-content:space-around;
+margin-bottom:30px;
 }
 
 .card{
-width:190px;
-height:120px;
-border-radius:20px;
-display:flex;
-justify-content:center;
-align-items:center;
-font-weight:600;
-font-size:16px;
-letter-spacing:1px;
+background:rgba(255,255,255,0.1);
+padding:20px;
+border-radius:15px;
+width:22%;
+text-align:center;
+backdrop-filter:blur(10px);
 transition:0.3s;
 cursor:pointer;
-background:var(--card-bg);
-box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 
-.card:hover{transform:translateY(-8px) scale(1.05);}
+.card.full{
+background:rgba(255,0,0,0.7);
+}
 
-#updated{font-size:0.95rem;opacity:0.85;}
+.card.empty{
+background:rgba(0,128,0,0.7);
+}
+
+.card.booked{
+background:rgba(255,204,0,0.9);
+color:black;
+}
+
+.history{
+margin-top:40px;
+background:rgba(255,255,255,0.1);
+padding:20px;
+border-radius:15px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.3);
+text-align:center;
+}
 
 </style>
-
 </head>
 
 <body>
-
-<div class="top-bar">
-<div class="user-badge">👤 <span id="userEmail">Loading...</span></div>
-<button class="toggle-btn" onclick="toggleMode()" id="modeBtn">🌙 Dark Mode</button>
-<button class="logout-btn" onclick="logout()">Logout</button>
-</div>
 
 <h1>🚗 Smart Parking Dashboard</h1>
 
@@ -238,30 +85,117 @@ box-shadow:0 10px 30px rgba(0,0,0,0.2);
 <h2 id="updated">Last Update: --</h2>
 </div>
 
-<div class="parking-container">
+<div class="stats">
 
-<div id="slot1" class="card" onclick="bookSlot('slot1')">Slot 1</div>
+<div id="slot1" class="card" onclick="toggleSlot(1)">Slot 1</div>
+<div id="slot2" class="card" onclick="toggleSlot(2)">Slot 2</div>
+<div id="slot3" class="card" onclick="toggleSlot(3)">Slot 3</div>
+<div id="slot4" class="card" onclick="toggleSlot(4)">Slot 4</div>
 
-<div id="slot2" class="card" onclick="bookSlot('slot2')">Slot 2</div>
+</div>
 
-<div id="slot3" class="card" onclick="bookSlot('slot3')">Slot 3</div>
+<div class="history">
+<h2>Parking History</h2>
 
-<div id="slot4" class="card" onclick="bookSlot('slot4')">Slot 4</div>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Entry Time</th>
+<th>Exit Time</th>
+<th>Duration</th>
+</tr>
+</thead>
 
+<tbody id="historyTable"></tbody>
+
+</table>
 </div>
 
 <script>
 
-function toggleMode(){
+const firebaseConfig = {
 
-const body=document.body;
-const btn=document.getElementById("modeBtn");
+apiKey:"PASTE_YOURS",
+authDomain:"PASTE_YOURS",
+databaseURL:"PASTE_YOURS",
+projectId:"PASTE_YOURS"
 
-body.classList.toggle("dark");
+};
 
-btn.innerText=body.classList.contains("dark")
-?"☀ Light Mode"
-:"🌙 Dark Mode";
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+
+/* READ SLOT DATA */
+
+db.ref("slots").on("value",(snapshot)=>{
+
+const data = snapshot.val();
+if(!data) return;
+
+let availableCount = 0;
+
+for(let i=1;i<=4;i++){
+
+let status = data["slot"+i];
+
+let element = document.getElementById("slot"+i);
+
+element.innerHTML = `
+<h3>Slot ${i}</h3>
+<p>Status: ${status}</p>
+`;
+
+if(status === "empty"){
+
+element.className="card empty";
+availableCount++;
+
+}
+else if(status === "full"){
+
+element.className="card full";
+
+}
+else if(status === "booked"){
+
+element.className="card booked";
+
+}
+
+}
+
+document.getElementById("available").innerText="Available: "+availableCount;
+
+document.getElementById("updated").innerText="Last Update: "+new Date().toLocaleTimeString();
+
+});
+
+
+/* SLOT CLICK FUNCTION */
+
+function toggleSlot(slotNumber){
+
+let ref = db.ref("slots/slot"+slotNumber);
+
+ref.once("value").then((snapshot)=>{
+
+let status = snapshot.val();
+
+if(status==="empty"){
+
+ref.set("booked");
+
+}
+else if(status==="booked"){
+
+ref.set("empty");
+
+}
+
+});
 
 }
 
