@@ -31,19 +31,14 @@
       if (status === "empty") return "#2ecc71";
       if (status === "filled") return "#e74c3c";
       if (status === "booked") return "#f1c40f";
-      if (status === "invalid") return "#3498db";
       return "#bdc3c7";
     }
 
-    function getCardText(slotKey, status, user, time) {
+    function getCardText(slotKey, status) {
       const slotName = slotKey.toUpperCase();
       if (status === "empty") return `${slotName} - EMPTY`;
       if (status === "filled") return `${slotName} - FILLED`;
-      if (status === "booked") {
-        const remaining = Math.max(0, 60 - Math.floor((Date.now() - time) / 1000));
-        return `${slotName} - BOOKED (${remaining}s)`;
-      }
-      if (status === "invalid") return `${slotName} - INVALID PARK`;
+      if (status === "booked") return `${slotName} - BOOKED`;
       return `${slotName} - UNKNOWN`;
     }
 
@@ -51,7 +46,7 @@
       await update(ref(database, "slots/" + slotKey), {
         status: "booked",
         user: currentUserEmail,
-        time: Date.now()
+        time: 0
       });
     }
 
@@ -61,19 +56,6 @@
         user: "",
         time: 0
       });
-    }
-
-    async function expireBookingIfNeeded(slotKey, slotObj) {
-      if (slotObj.status === "booked") {
-        const now = Date.now();
-        if (now - slotObj.time >= 60000) {
-          await update(ref(database, "slots/" + slotKey), {
-            status: "empty",
-            user: "",
-            time: 0
-          });
-        }
-      }
     }
 
     function renderSlots() {
@@ -87,7 +69,7 @@
         if (slot.status === "empty") availableCount++;
 
         card.style.background = getCardColour(slot.status);
-        card.innerText = getCardText(key, slot.status, slot.user, slot.time);
+        card.innerText = getCardText(key, slot.status);
 
         card.onclick = async () => {
           const currentSlot = slotsData[key];
@@ -95,24 +77,14 @@
           if (currentSlot.status === "empty") {
             await bookSlot(key);
             alert(key.toUpperCase() + " booked successfully");
-          } 
-          else if (currentSlot.status === "filled") {
+          } else if (currentSlot.status === "filled") {
             alert(key.toUpperCase() + " is already filled");
-          } 
-          else if (currentSlot.status === "booked") {
+          } else if (currentSlot.status === "booked") {
             if (currentSlot.user === currentUserEmail) {
               await cancelBooking(key);
-              alert("Booking removed for " + key.toUpperCase() + ". Now you can park.");
+              alert("Booking removed for " + key.toUpperCase());
             } else {
               alert(key.toUpperCase() + " is already booked by another user");
-            }
-          }
-          else if (currentSlot.status === "invalid") {
-            if (currentSlot.user === currentUserEmail) {
-              await cancelBooking(key);
-              alert("Booking removed for " + key.toUpperCase() + ". Since a car is still there, it will become filled.");
-            } else {
-              alert(key.toUpperCase() + " has invalid parking on a booked slot");
             }
           }
         };
@@ -120,12 +92,6 @@
 
       document.getElementById("available").innerText = "Available: " + availableCount;
       document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
-    }
-
-    async function checkAllTimeouts() {
-      for (const key in slotsData) {
-        await expireBookingIfNeeded(key, slotsData[key]);
-      }
     }
 
     window.addEventListener("load", () => {
@@ -143,15 +109,9 @@
         onValue(slotsRef, (snapshot) => {
           const data = snapshot.val();
           if (!data) return;
-
           slotsData = data;
           renderSlots();
         });
-
-        setInterval(async () => {
-          await checkAllTimeouts();
-          renderSlots();
-        }, 1000);
       });
 
       window.logout = async () => {
@@ -220,10 +180,6 @@
     .toggle-btn { background: #2563eb; }
     .logout-btn { background: #e74c3c; }
 
-    .toggle-btn:hover, .logout-btn:hover {
-      transform: scale(1.05);
-    }
-
     h1 {
       text-align: center;
       font-size: 2.5rem;
@@ -245,11 +201,6 @@
       border-radius: 18px;
       font-size: 1.1rem;
       box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      transition: 0.3s;
-    }
-
-    .stats h2:hover {
-      transform: translateY(-5px);
     }
 
     .parking-container {
@@ -269,21 +220,11 @@
       font-weight: 600;
       font-size: 16px;
       letter-spacing: 1px;
-      transition: 0.3s;
       cursor: pointer;
       color: #111;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       text-align: center;
       padding: 10px;
-    }
-
-    .card:hover {
-      transform: translateY(-8px) scale(1.05);
-    }
-
-    #updated {
-      font-size: 0.95rem;
-      opacity: 0.85;
     }
   </style>
 </head>
