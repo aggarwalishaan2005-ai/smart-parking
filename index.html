@@ -26,6 +26,7 @@
 
     let currentUserEmail = "";
     let slotsData = {};
+    let timerStarted = false;
 
     function getCardColour(status) {
       if (status === "empty") return "#2ecc71";
@@ -34,11 +35,21 @@
       return "#bdc3c7";
     }
 
-    function getCardText(slotKey, status) {
+    function getRemainingSeconds(time) {
+      const remaining = 30 - Math.floor((Date.now() - time) / 1000);
+      return remaining > 0 ? remaining : 0;
+    }
+
+    function getCardText(slotKey, status, time) {
       const slotName = slotKey.toUpperCase();
+
       if (status === "empty") return `${slotName} - EMPTY`;
       if (status === "filled") return `${slotName} - FILLED`;
-      if (status === "booked") return `${slotName} - BOOKED`;
+      if (status === "booked") {
+        const remaining = getRemainingSeconds(time);
+        return `${slotName} - BOOKED (${remaining}s)`;
+      }
+
       return `${slotName} - UNKNOWN`;
     }
 
@@ -46,7 +57,7 @@
       await update(ref(database, "slots/" + slotKey), {
         status: "booked",
         user: currentUserEmail,
-        time: 0
+        time: Date.now()
       });
     }
 
@@ -56,6 +67,22 @@
         user: "",
         time: 0
       });
+    }
+
+    async function expireBookings() {
+      for (const key in slotsData) {
+        const slot = slotsData[key];
+        if (slot.status === "booked") {
+          const remaining = getRemainingSeconds(slot.time);
+          if (remaining <= 0) {
+            await update(ref(database, "slots/" + key), {
+              status: "empty",
+              user: "",
+              time: 0
+            });
+          }
+        }
+      }
     }
 
     function renderSlots() {
@@ -69,7 +96,7 @@
         if (slot.status === "empty") availableCount++;
 
         card.style.background = getCardColour(slot.status);
-        card.innerText = getCardText(key, slot.status);
+        card.innerText = getCardText(key, slot.status, slot.time || 0);
 
         card.onclick = async () => {
           const currentSlot = slotsData[key];
@@ -112,6 +139,14 @@
           slotsData = data;
           renderSlots();
         });
+
+        if (!timerStarted) {
+          timerStarted = true;
+          setInterval(async () => {
+            await expireBookings();
+            renderSlots();
+          }, 1000);
+        }
       });
 
       window.logout = async () => {
