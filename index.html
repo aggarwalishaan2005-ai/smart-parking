@@ -40,6 +40,11 @@
       return remaining > 0 ? remaining : 0;
     }
 
+    function formatTime(value) {
+      if (!value || value === 0) return "-";
+      return new Date(value).toLocaleString();
+    }
+
     function getCardText(slotKey, status, time) {
       const slotName = slotKey.toUpperCase();
 
@@ -73,7 +78,7 @@
       for (const key in slotsData) {
         const slot = slotsData[key];
         if (slot.status === "booked") {
-          const remaining = getRemainingSeconds(slot.time);
+          const remaining = getRemainingSeconds(slot.time || 0);
           if (remaining <= 0) {
             await update(ref(database, "slots/" + key), {
               status: "empty",
@@ -82,6 +87,26 @@
             });
           }
         }
+      }
+    }
+
+    function renderTable() {
+      const tableBody = document.getElementById("tableBody");
+      tableBody.innerHTML = "";
+
+      for (const key in slotsData) {
+        const slot = slotsData[key];
+
+        const row = `
+          <tr>
+            <td>${key.toUpperCase()}</td>
+            <td>${slot.status}</td>
+            <td>${formatTime(slot.last_checkin)}</td>
+            <td>${formatTime(slot.last_checkout)}</td>
+          </tr>
+        `;
+
+        tableBody.innerHTML += row;
       }
     }
 
@@ -119,6 +144,8 @@
 
       document.getElementById("available").innerText = "Available: " + availableCount;
       document.getElementById("updated").innerText = "Last Update: " + new Date().toLocaleTimeString();
+
+      renderTable();
     }
 
     window.addEventListener("load", () => {
@@ -168,12 +195,14 @@
       --bg: linear-gradient(135deg, #eef2f7, #d9e2ec);
       --card-bg: #ffffff;
       --text: #1f2937;
+      --table-head: #1f2937;
     }
 
     body.dark {
       --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       --card-bg: rgba(255,255,255,0.1);
       --text: #ffffff;
+      --table-head: #0b1320;
     }
 
     body {
@@ -243,6 +272,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 30px;
+      margin-bottom: 40px;
     }
 
     .card {
@@ -260,6 +290,32 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       text-align: center;
       padding: 10px;
+    }
+
+    .table-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: center;
+      border-bottom: 1px solid rgba(128,128,128,0.25);
+    }
+
+    th {
+      background: var(--table-head);
+      color: white;
     }
   </style>
 </head>
@@ -284,6 +340,20 @@
     <div id="slot2" class="card">SLOT2</div>
     <div id="slot3" class="card">SLOT3</div>
     <div id="slot4" class="card">SLOT4</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Slot</th>
+          <th>Status</th>
+          <th>Last Check-In</th>
+          <th>Last Check-Out</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
   </div>
 
   <script>
