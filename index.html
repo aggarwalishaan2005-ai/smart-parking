@@ -31,6 +31,7 @@
       if (status === "empty") return "#2ecc71";
       if (status === "filled") return "#e74c3c";
       if (status === "booked") return "#f1c40f";
+      if (status === "invalid") return "#3498db";
       return "#bdc3c7";
     }
 
@@ -42,6 +43,7 @@
         const remaining = Math.max(0, 60 - Math.floor((Date.now() - time) / 1000));
         return `${slotName} - BOOKED (${remaining}s)`;
       }
+      if (status === "invalid") return `${slotName} - INVALID PARK`;
       return `${slotName} - UNKNOWN`;
     }
 
@@ -100,9 +102,17 @@
           else if (currentSlot.status === "booked") {
             if (currentSlot.user === currentUserEmail) {
               await cancelBooking(key);
-              alert("Your booking for " + key.toUpperCase() + " was cancelled");
+              alert("Booking removed for " + key.toUpperCase() + ". Now you can park.");
             } else {
               alert(key.toUpperCase() + " is already booked by another user");
+            }
+          }
+          else if (currentSlot.status === "invalid") {
+            if (currentSlot.user === currentUserEmail) {
+              await cancelBooking(key);
+              alert("Booking removed for " + key.toUpperCase() + ". Since a car is still there, it will become filled.");
+            } else {
+              alert(key.toUpperCase() + " has invalid parking on a booked slot");
             }
           }
         };
