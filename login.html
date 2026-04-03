@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Smart Parking Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPark — Smart Parking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-
-    const firebaseConfig = {
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    firebase.initializeApp({
       apiKey: "AIzaSyAuSXP4AeKXNnO1Uyj3Ds5soheQXzedsmk",
       authDomain: "smart-parking-60139.firebaseapp.com",
       databaseURL: "https://smart-parking-60139-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -17,19 +18,25 @@
       storageBucket: "smart-parking-60139.appspot.com",
       messagingSenderId: "284320423783",
       appId: "1:284320423783:web:535b714ab14f70597899c2"
-    };
+    });
+    const auth = firebase.auth();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    auth.onAuthStateChanged(function(user) {
+      if (user) window.location.replace("index.html");
+    });
 
-    window.login = async function () {
-      const email = document.getElementById("email").value;
+    function doLogin() {
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const remember = document.getElementById("remember").checked;
+      const btn = document.getElementById("loginBtn");
 
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
+      if (!email || !password) { showError("Please enter email and password."); return; }
+      btn.classList.add("loading"); btn.disabled = true;
+      document.getElementById("errorMsg").style.display = "none";
 
+      auth.signInWithEmailAndPassword(email, password).then(function() {
         if (remember) {
           localStorage.setItem("rememberEmail", email);
           localStorage.setItem("rememberPassword", password);
@@ -37,161 +44,371 @@
           localStorage.removeItem("rememberEmail");
           localStorage.removeItem("rememberPassword");
         }
+        window.location.replace("index.html");
+      }).catch(function() {
+        showError("Invalid email or password. Please try again.");
+        btn.classList.remove("loading"); btn.disabled = false;
+      });
+    }
 
-        window.location.href = "index.html";
-      } catch (error) {
-        alert("Login Failed: " + error.message);
-      }
-    };
+    function doGoogleSignIn() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).then(function() {
+        window.location.replace("index.html");
+      }).catch(function(e) {
+        showError("Google sign-in failed. Make sure pop-ups are allowed.");
+      });
+    }
+
+    function showError(msg) {
+      const b = document.getElementById("errorMsg");
+      b.textContent = msg; b.style.display = "block";
+    }
   </script>
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --lime: #c8f135;
+      --dark: #030a14;
+      --panel: #0c1220;
+      --border: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --muted: #5a6f8a;
     }
 
     body {
-      height: 100vh;
+      min-height: 100vh;
+      background: var(--dark);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+    }
+
+    /* ===== LEFT: Logo showcase ===== */
+    .left-panel {
+      width: 55%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      /* Deep navy matching your SPark logo background */
+      background: radial-gradient(ellipse at 35% 50%, #071428 0%, #030a14 65%);
+    }
+
+    /* Circuit-board grid lines */
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* Blue glow - matches logo's blue tones */
+    .glow-blue {
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 65%);
+      top: 30%; left: 10%;
+      animation: pulse 5s ease-in-out infinite;
+    }
+    /* Orange glow - matches logo's orange/wifi tones */
+    .glow-orange {
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 65%);
+      top: 20%; right: 5%;
+      animation: pulse 7s ease-in-out infinite reverse;
+    }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.8} 50%{transform:scale(1.1);opacity:1} }
+
+    /* ---- Logo area ---- */
+    .logo-showcase {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .spark-logo {
+      width: min(380px, 80%);
+      /* Drop shadow matching the logo's style */
+      filter: drop-shadow(0 0 30px rgba(37,99,235,0.5)) drop-shadow(0 0 60px rgba(249,115,22,0.2));
+      animation: logoFloat 4s ease-in-out infinite;
+    }
+    @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+    /* ---- Slot preview grid ---- */
+    .slot-preview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: min(300px, 80%);
+      margin-top: 36px;
+    }
+    .sp-card {
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+    .sp-card.v { background: rgba(200,241,53,0.06); border: 1px solid rgba(200,241,53,0.2); color: #c8f135; }
+    .sp-card.o { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+    .sp-card.r { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; }
+    .sp-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .sp-card.v .sp-dot { background: #c8f135; box-shadow: 0 0 5px #c8f135; animation: blink 2s infinite; }
+    .sp-card.o .sp-dot { background: #f87171; }
+    .sp-card.r .sp-dot { background: #fbbf24; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .sp-sub { font-size: 8px; font-weight: 400; opacity: 0.5; display: block; margin-top: 1px; }
+
+    /* ---- Bottom stats bar ---- */
+    .left-stats {
+      position: relative;
+      z-index: 2;
       display: flex;
       justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      gap: 48px;
+      padding: 24px 40px;
+      border-top: 1px solid rgba(255,255,255,0.05);
     }
+    .ls-item { text-align: center; }
+    .ls-num { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--lime); }
+    .ls-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
 
-    .login-box {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(15px);
-      padding: 40px;
-      border-radius: 20px;
-      width: 350px;
-      text-align: center;
-      color: white;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-    }
-
-    .logo {
-      width: 90px;
-      margin-bottom: 20px;
-    }
-
-    h2 {
-      margin-bottom: 25px;
-      font-weight: 600;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-    }
-
-    .password-wrapper {
-      position: relative;
-    }
-
-    .show-btn {
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      color: #2563eb;
-      font-weight: 600;
-    }
-
-    .remember-container {
+    /* ===== RIGHT: Auth form ===== */
+    .right-panel {
+      width: 45%;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      font-size: 14px;
-      margin-bottom: 20px;
+      justify-content: center;
+      padding: 48px 44px;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
     }
 
-    .remember-container input {
-      width: auto;
-      margin-right: 8px;
+    .auth-box {
+      width: 100%;
+      max-width: 380px;
+      animation: slideUp 0.5s ease both;
     }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
-    button.login-btn {
+    .auth-brand {
+      margin-bottom: 36px;
+    }
+    .auth-brand img {
+      height: 36px;
+      filter: brightness(1.15);
+    }
+    /* Fallback text brand */
+    .brand-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .brand-text span { color: var(--lime); }
+
+    h2.form-h { font-family: 'Syne', sans-serif; font-size: 1.65rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .form-p { color: var(--muted); font-size: 0.86rem; margin-bottom: 28px; line-height: 1.5; }
+
+    /* Google button */
+    .g-btn {
       width: 100%;
       padding: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 10px;
-      border: none;
-      background: #2563eb;
-      color: white;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
-      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: 0.2s;
+      margin-bottom: 20px;
+    }
+    .g-btn:hover { background: rgba(255,255,255,0.08); }
+    .g-icon { width: 18px; height: 18px; flex-shrink: 0;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
     }
 
-    button.login-btn:hover {
-      background: #1d4ed8;
+    .or-divider {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px; color: var(--muted); font-size: 0.75rem;
+    }
+    .or-divider::before,.or-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .fg { margin-bottom: 14px; }
+    .fl { display:block; font-size:0.72rem; font-weight:600; color:#7a8fa8; margin-bottom:7px; letter-spacing:0.8px; text-transform:uppercase; }
+
+    .iw { position:relative; }
+    .iw input {
+      width:100%; padding:12px 15px 12px 40px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border);
+      border-radius:10px;
+      color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.9rem; outline:none; transition:0.2s;
+    }
+    .iw input:focus { border-color:rgba(200,241,53,0.4); background:rgba(200,241,53,0.03); }
+    .iw input::placeholder { color:#2a3a4a; }
+    .ii { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; opacity:0.3; pointer-events:none; }
+    .st { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:11px; font-weight:600; font-family:'DM Sans',sans-serif; }
+    .st:hover { color:var(--lime); }
+
+    .chk-row { display:flex; align-items:center; gap:8px; margin-bottom:20px; cursor:pointer; font-size:0.83rem; color:var(--muted); }
+    .chk-row input[type="checkbox"] { appearance:none; width:15px; height:15px; border:1px solid #2a3340; border-radius:4px; background:transparent; cursor:pointer; position:relative; transition:0.2s; flex-shrink:0; }
+    .chk-row input:checked { background:var(--lime); border-color:var(--lime); }
+    .chk-row input:checked::after { content:'✓'; position:absolute; top:-1px; left:2px; font-size:10px; color:#050a03; font-weight:800; }
+
+    #errorMsg { display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; padding:10px 13px; border-radius:9px; font-size:0.82rem; margin-bottom:14px; }
+
+    .sub-btn {
+      width:100%; padding:13px; background:var(--lime); color:#050a03;
+      border:none; border-radius:10px; font-family:'Syne',sans-serif; font-size:0.92rem; font-weight:700; cursor:pointer; letter-spacing:0.5px; transition:0.2s; position:relative; overflow:hidden;
+    }
+    .sub-btn:hover { background:#d4f545; transform:translateY(-1px); }
+    .sub-btn:active { transform:translateY(0); }
+    .sub-btn.loading { color:transparent; pointer-events:none; }
+    .sub-btn.loading::after { content:''; position:absolute; width:18px; height:18px; border:2px solid transparent; border-top-color:#050a03; border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); animation:spin 0.7s linear infinite; }
+    @keyframes spin { to{ transform:translate(-50%,-50%) rotate(360deg); } }
+
+    .auth-footer { margin-top:28px; padding-top:18px; border-top:1px solid var(--border); display:flex; justify-content:center; gap:20px; }
+    .af-stat { text-align:center; }
+    .af-num { font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:800; color:var(--lime); }
+    .af-lbl { font-size:0.65rem; color:var(--muted); }
+    .af-div { width:1px; background:var(--border); }
+
+    @media(max-width:768px){
+      body{flex-direction:column;}
+      .left-panel{width:100%;min-height:260px;}
+      .logo-showcase{padding:28px;}
+      .spark-logo{width:200px;}
+      .slot-preview{display:none;}
+      .left-stats{padding:16px 28px;gap:28px;}
+      .right-panel{width:100%;padding:32px 24px;}
     }
   </style>
 </head>
-
 <body>
 
-  <div class="login-box">
+  <!-- LEFT: Logo panel -->
+  <div class="left-panel">
+    <div class="glow-blue"></div>
+    <div class="glow-orange"></div>
 
-    <!-- 🔹 ADD YOUR LOGO HERE -->
-    <img src="logo.jpeg" class="logo" alt="Logo">
+    <div class="logo-showcase">
+      <img src="logo.jpeg" class="spark-logo" alt="SPark"
+           onerror="this.style.display='none';document.getElementById('fb').style.display='flex'">
+      <div id="fb" style="display:none;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="width:50px;height:50px;background:var(--lime);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;">🅿</div>
+        <span style="font-family:Syne,sans-serif;font-size:2rem;font-weight:800;color:#f1f5f9;">S<span style="color:var(--lime)">Park</span></span>
+      </div>
 
-    <h2>Smart Parking Login</h2>
-
-    <input type="email" id="email" placeholder="Enter Email">
-
-    <div class="password-wrapper">
-      <input type="password" id="password" placeholder="Enter Password">
-      <button type="button" class="show-btn" onclick="togglePassword()" id="showBtn">
-        Show Password
-      </button>
+      <div class="slot-preview">
+        <div class="sp-card v"><div class="sp-dot"></div><div>SLOT 1<span class="sp-sub">VACANT</span></div></div>
+        <div class="sp-card o"><div class="sp-dot"></div><div>SLOT 2<span class="sp-sub">OCCUPIED</span></div></div>
+        <div class="sp-card r"><div class="sp-dot"></div><div>SLOT 3<span class="sp-sub">RESERVED</span></div></div>
+        <div class="sp-card v"><div class="sp-dot"></div><div>SLOT 4<span class="sp-sub">VACANT</span></div></div>
+      </div>
     </div>
 
-    <div class="remember-container">
-      <input type="checkbox" id="remember">
-      <label for="remember">Remember Me</label>
+    <div class="left-stats">
+      <div class="ls-item"><div class="ls-num">4</div><div class="ls-lbl">Total Slots</div></div>
+      <div class="ls-item"><div class="ls-num">IoT</div><div class="ls-lbl">Powered</div></div>
+      <div class="ls-item"><div class="ls-num">24/7</div><div class="ls-lbl">Uptime</div></div>
     </div>
-
-    <button class="login-btn" onclick="login()">Login</button>
-
   </div>
 
-<script>
-  // Auto Fill if remembered
-  window.onload = function () {
-    const savedEmail = localStorage.getItem("rememberEmail");
-    const savedPassword = localStorage.getItem("rememberPassword");
+  <!-- RIGHT: Auth form -->
+  <div class="right-panel">
+    <div class="auth-box">
 
-    if (savedEmail && savedPassword) {
-      document.getElementById("email").value = savedEmail;
-      document.getElementById("password").value = savedPassword;
-      document.getElementById("remember").checked = true;
+      <div class="auth-brand">
+        <img src="logo.jpeg" style="height:38px;filter:brightness(1.1);" alt="SPark"
+             onerror="this.outerHTML='<div class=\'brand-text\'>S<span>Park</span></div>'">
+      </div>
+
+      <h2 class="form-h">Welcome back 👋</h2>
+      <p class="form-p">Sign in to monitor your parking facility and manage slot bookings in real time.</p>
+
+      <button class="g-btn" onclick="doGoogleSignIn()">
+        <div class="g-icon"></div>
+        Continue with Google
+      </button>
+
+      <div class="or-divider">or continue with email</div>
+
+      <div class="fg">
+        <label class="fl">Email Address</label>
+        <div class="iw">
+          <span class="ii">✉</span>
+          <input type="email" id="email" placeholder="you@example.com">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Password</label>
+        <div class="iw">
+          <span class="ii">🔒</span>
+          <input type="password" id="password" placeholder="Enter your password">
+          <button class="st" type="button" id="showBtn" onclick="togglePwd()">Show</button>
+        </div>
+      </div>
+
+      <label class="chk-row">
+        <input type="checkbox" id="remember">
+        Remember me on this device
+      </label>
+
+      <div id="errorMsg"></div>
+
+      <button class="sub-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+
+      <div class="auth-footer">
+        <div class="af-stat"><div class="af-num">ESP32</div><div class="af-lbl">Hardware</div></div>
+        <div class="af-div"></div>
+        <div class="af-stat"><div class="af-num">Firebase</div><div class="af-lbl">Real-time DB</div></div>
+        <div class="af-div"></div>
+        <div class="af-stat"><div class="af-num">IR+LED</div><div class="af-lbl">Sensors</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      const e = localStorage.getItem("rememberEmail");
+      const p = localStorage.getItem("rememberPassword");
+      if (e && p) {
+        document.getElementById("email").value = e;
+        document.getElementById("password").value = p;
+        document.getElementById("remember").checked = true;
+      }
+    };
+    function togglePwd() {
+      const f = document.getElementById("password"), b = document.getElementById("showBtn");
+      f.type = f.type === "password" ? "text" : "password";
+      b.textContent = f.type === "password" ? "Show" : "Hide";
     }
-  };
-
-  function togglePassword() {
-    const passField = document.getElementById("password");
-    const btn = document.getElementById("showBtn");
-
-    if (passField.type === "password") {
-      passField.type = "text";
-      btn.innerText = "Hide Password";
-    } else {
-      passField.type = "password";
-      btn.innerText = "Show Password";
-    }
-  }
-</script>
-
+    document.addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
+  </script>
 </body>
 </html>
-
