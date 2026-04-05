@@ -106,6 +106,18 @@
       });
     }
 
+    function doForgotPassword() {
+      const email = document.getElementById("email").value.trim();
+      if (!email) { showError("Enter your email address above, then click Forgot Password."); return; }
+      clearError();
+      auth.sendPasswordResetEmail(email).then(function() {
+        showInfo("Password reset email sent to " + email + ". Check your inbox.");
+      }).catch(function(err) {
+        if (err.code==="auth/user-not-found") showError("No account found with this email.");
+        else showError("Could not send reset email. Please try again.");
+      });
+    }
+
     function showError(msg) {
       const b = document.getElementById("errorMsg");
       b.className = "msg-box error"; b.innerHTML = "⚠️ " + msg; b.style.display = "flex";
@@ -465,6 +477,13 @@
         <strong>Running locally?</strong> Open via <code>http://localhost:8000/login.html</code> using <strong>START_SERVER.py</strong> — or host on <strong>GitHub Pages</strong> for Google Sign-In to work.
       </div>
 
+      <div style="text-align:center;margin-top:16px;margin-bottom:4px;">
+        <span style="font-size:0.82rem;color:var(--mu);">New to SPark? </span>
+        <a href="register.html" style="font-size:0.82rem;color:var(--lime);font-weight:600;text-decoration:none;">Create an Account →</a>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <a href="#" onclick="doForgotPassword()" style="font-size:0.78rem;color:var(--mu2);text-decoration:none;transition:0.2s;" onmouseover="this.style.color='var(--lime)'" onmouseout="this.style.color='var(--mu2)'">Forgot your password?</a>
+      </div>
       <div class="auth-footer">
         <div class="af-item"><div class="af-val">ESP32</div><div class="af-lbl">Hardware</div></div>
         <div class="af-sep"></div>
